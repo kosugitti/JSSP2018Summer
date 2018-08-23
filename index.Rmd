@@ -1,0 +1,48 @@
+---
+title: "JSSP2018チュートリアル資料"
+---
+
+# お品書き
+
+## 受講準備
+
+授業準備のため次のコードを実行しておいてください。
+
+```{r,eval=F}
+install.packages('tidyverse')
+install.packages('rstan')
+install.packages('bayesplot')
+install.packages('summarytools')
+install.packages('gridExtra')
+install.packages('GGally')
+install.packages('loo')
+```
+
+
+## [乱数による分布の近似](jssp01.html)
+
+## [Stanによる分布の近似](jssp02.html)
+
+### 1標本の平均の検定
+
+ + パラメータリカバリという考え方
+ + MCMCサンプルが増えたらどうなる？
+ + データが増えたらどうなる？
+ + 事前分布の影響
+ + 事後予測分布を描くには
+ + 事後対数尤度の計算
+
+## 実践編；帰無仮説検定はこう変わる
+
+### 仮説検定の授業に沿ってみる2；t検定
+### 仮説検定の授業に沿ってみる3；対応のあるt検定
+### 分散分析モデルは大変
+
+## 実践編；線形モデルの展開
+
+### Stanで回帰分析を実行する
+### ロジスティック回帰分析
+### 一般化線形モデル
+### 階層線形モデル
+
+## 実践編；確率モデルは面白い

@@ -1,0 +1,147 @@
+---
+title: "Stanによる分布の近似"
+---
+
+
+```{r libraries,echo=F,include=F}
+# データ整形汎用パッケージ
+library(tidyverse)
+# MCMC乱数発生器stanをRからつかうパッケージ
+library(rstan)
+# rstanを並列で使うオプション
+options(mc.cores = parallel::detectCores())
+# 変更なしの実行ファイルは保存しておくオプション
+rstan_options(auto_write = TRUE)
+# データ要約・可視化パッケージ
+library(summarytools)
+# 複数のグラフを並べて表示するパッケージ
+library(gridExtra)
+library(GGally)
+# ベイズモデル比較指標計算パッケージ
+library(loo)
+# ベイズモデルの結果を可視化するパッケージ
+library(bayesplot)
+# 描画の際に文字化けするMacユーザは次の行のコメントアウトをとって実行する
+old = theme_set(theme_gray(base_family = "HiraKakuProN-W3"))
+```
+
+
+
+
+# Stanによる乱数の近似
+
+## 乱数のタネを設定
+
+```{r}
+set.seed(201808)
+```
+
+## データを作ってみます
+
+これが今回の真値です。データを平均59，標準偏差9の正規分布から作っています。
+
+```{r}
+Y <- round(rnorm(49, 53, 9))
+```
+
+## 仮想データの中身
+
+```{r}
+Y
+```
+
+## 仮想データの平均値
+
+```{r}
+mean(Y)
+```
+
+理論的真値は53ですが，確率変数の実現値は揺れるので53ジャストになることはありませんね。
+
+我々はこのようなデータしか手に入らない中で，平均値はどこにあるのかを探ることになります。
+
+## stanモデルコンパイル
+
+ここでR から Stanへ，「乱数発生器を作れ」との命令が行きます。
+命令を受けたStanはコンパイルを始めます。少し時間がかかるのでお待ちください。
+
+コンパイルが終わっても特に返事はして来ませんが，コンソール画面が「待ち」の状態になれば終わったと思ってください。
+
+警告がたくさん出たとしても，それはコンパイル時の非常にテクニカルな指摘なので気にしなくて結構です。
+
+```{r stan model 1,results="hide"}
+model1 <- stan_model('yoshinaya.stan')
+```
+```{r, echo=FALSE, eval=TRUE}
+paste(readLines("yoshinaya.stan"), collapse = "\n") %>% cat()
+```
+
+
+## stanに与えるデータセットを準備
+
+```{r}
+dataset <- list(N=49, X=Y)
+```
+
+## stanをつかってサンプリング
+
+```{r stan sampling1}
+fit <- sampling(model1,dataset)
+```
+
+## 結果の出力
+
+```{r}
+print(fit)
+```
+
+今回は真値として53の世界からデータが得られていると考えて，モデルを作り，推定値として53.11です。50% confidential inter
+
+
+## 図示
+```{r visualize2}
+plot(fit,pars='mu',show_density=T)
+```
+
+## パッケージを使って美しく
+```{r visualize using packages}
+bayesplot::mcmc_dens(as.array(fit),pars='mu')
+bayesplot::mcmc_trace(as.array(fit),pars='mu')
+bayesplot::mcmc_areas(as.array(fit,pars='mu'))
+```
+
+## MCMCサンプルを取り出す
+```{r extract}
+rstan::extract(fit,pars='mu')
+```
+
+## 取り出したデータセットを処理
+```{r extract to df}
+rstan::extract(fit,pars='mu') %>% data.frame() %>% summary()
+
+```
+
+## 取り出したデータセットを使って
+```{r}
+rstan::extract(fit,pars='mu') %>% data.frame() ->result.df
+# データ数
+NROW(result.df)
+# 任意のパーセンタイル点
+quantile(result.df$mu,probs = c(0.025,0.56,0.98))
+# 任意の区間の密度
+NROW(result.df[result.df$mu>55 & result.df$mu < 60,])/NROW(result.df)
+# 別解
+result.df %>% dplyr::filter(.$mu>55 & .$mu<60) %>% NROW(.)/4000
+```
+
+## MCMCのサンプルサイズ指定
+
+```{r}
+fit <- sampling(model1,dataset,
+                warmup=5000,
+                iter=100000,
+                chains=3,
+                thin=2)
+fit
+```
+
