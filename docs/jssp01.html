@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+
+<title>乱数による分布の近似</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+<link rel="stylesheet" href="site_style.css" type="text/css" />
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+
+
+
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+  padding-left: 25px;
+  text-indent: 0;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">JSSP2018夏のチュートリアル</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">ホーム</a>
+</li>
+<li>
+  <a href="jssp01.html">Lesson1</a>
+</li>
+<li>
+  <a href="jssp02.html">Lesson2</a>
+</li>
+<li>
+  <a href="jssp03.html">Lesson3</a>
+</li>
+<li>
+  <a href="jssp04.html">Lesson4</a>
+</li>
+<li>
+  <a href="jssp05.html">Lesson5</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">乱数による分布の近似</h1>
+
+</div>
+
+
+<div class="section level1">
+<h1>パッケージの装備</h1>
+<pre class="r"><code># データ整形汎用パッケージ
+library(tidyverse)</code></pre>
+<pre><code>## ─ Attaching packages ──────────────── tidyverse 1.2.1 ─</code></pre>
+<pre><code>## ✔ ggplot2 3.0.0     ✔ purrr   0.2.5
+## ✔ tibble  1.4.2     ✔ dplyr   0.7.6
+## ✔ tidyr   0.8.1     ✔ stringr 1.3.1
+## ✔ readr   1.1.1     ✔ forcats 0.3.0</code></pre>
+<pre><code>## ─ Conflicts ───────────────── tidyverse_conflicts() ─
+## ✖ dplyr::filter() masks stats::filter()
+## ✖ dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code># MCMC乱数発生器stanをRからつかうパッケージ
+library(rstan)</code></pre>
+<pre><code>## Loading required package: StanHeaders</code></pre>
+<pre><code>## rstan (Version 2.17.3, GitRev: 2e1f913d3ca3)</code></pre>
+<pre><code>## For execution on a local, multicore CPU with excess RAM we recommend calling
+## options(mc.cores = parallel::detectCores()).
+## To avoid recompilation of unchanged Stan programs, we recommend calling
+## rstan_options(auto_write = TRUE)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;rstan&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:tidyr&#39;:
+## 
+##     extract</code></pre>
+<pre class="r"><code># rstanを並列で使うオプション
+options(mc.cores = parallel::detectCores())
+# 変更なしの実行ファイルは保存しておくオプション
+rstan_options(auto_write = TRUE)
+# データ要約・可視化パッケージ
+library(summarytools)
+# 複数のグラフを並べて表示するパッケージ
+library(gridExtra)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;gridExtra&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:dplyr&#39;:
+## 
+##     combine</code></pre>
+<pre class="r"><code>library(GGally)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;GGally&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:dplyr&#39;:
+## 
+##     nasa</code></pre>
+<pre class="r"><code># ベイズモデル比較指標計算パッケージ
+library(loo)</code></pre>
+<pre><code>## This is loo version 2.0.0.
+## **NOTE: As of version 2.0.0 loo defaults to 1 core but we recommend using as many as possible. Use the &#39;cores&#39; argument or set options(mc.cores = NUM_CORES) for an entire session. Visit mc-stan.org/loo/news for details on other changes.</code></pre>
+<pre class="r"><code># ベイズモデルの結果を可視化するパッケージ
+library(bayesplot)</code></pre>
+<pre><code>## This is bayesplot version 1.6.0</code></pre>
+<pre><code>## - Online documentation and vignettes at mc-stan.org/bayesplot</code></pre>
+<pre><code>## - bayesplot theme set to bayesplot::theme_default()</code></pre>
+<pre><code>##    * Does _not_ affect other ggplot2 plots</code></pre>
+<pre><code>##    * See ?bayesplot_theme_set for details on theme setting</code></pre>
+<pre class="r"><code># 描画の際に文字化けするMacユーザは次の行のコメントアウトをとって実行する
+old = theme_set(theme_gray(base_family = &quot;HiraKakuProN-W3&quot;))</code></pre>
+</div>
+<div class="section level1">
+<h1>乱数による近似</h1>
+<pre class="r"><code># 数値例を発生
+set.seed(12345)
+# 標準正規分布から発生する100個の乱数をつくってみる
+x100 &lt;- rnorm(100,0,1)
+# 一部表示
+head(x100)</code></pre>
+<pre><code>## [1]  0.5855288  0.7094660 -0.1093033 -0.4534972  0.6058875 -1.8179560</code></pre>
+<pre class="r"><code>mean(x100)        # 平均値</code></pre>
+<pre><code>## [1] 0.2451972</code></pre>
+<pre class="r"><code>var(x100)         # 分散</code></pre>
+<pre><code>## [1] 1.242625</code></pre>
+<pre class="r"><code>sd(x100)          # 標準偏差</code></pre>
+<pre><code>## [1] 1.114731</code></pre>
+<pre class="r"><code>max(x100)         # 最大値</code></pre>
+<pre><code>## [1] 2.477111</code></pre>
+<pre class="r"><code>min(x100)         # 最小値</code></pre>
+<pre><code>## [1] -2.380358</code></pre>
+<pre class="r"><code>median(x100)      # 中央値</code></pre>
+<pre><code>## [1] 0.4837183</code></pre>
+<pre class="r"><code># パーセンタイル
+# 0%, 25%, 50%, 75%, 100%
+quantile(x100,probs=c(0,0.25,0.5,0.75,1))</code></pre>
+<pre><code>##         0%        25%        50%        75%       100% 
+## -2.3803581 -0.5901091  0.4837183  0.9003897  2.4771109</code></pre>
+<div class="section level2">
+<h2>毎回答えが違う</h2>
+<pre class="r"><code>x100.1 &lt;- rnorm(100,0,1)
+x100.2 &lt;- rnorm(100,0,1)
+x100.3 &lt;- rnorm(100,0,1)
+
+mean(x100.1)</code></pre>
+<pre><code>## [1] 0.04523311</code></pre>
+<pre class="r"><code>mean(x100.2)</code></pre>
+<pre><code>## [1] -0.04621158</code></pre>
+<pre class="r"><code>mean(x100.3)</code></pre>
+<pre><code>## [1] 0.2152759</code></pre>
+</div>
+<div class="section level2">
+<h2>サンプルサイズを増やすと理論値に近づく</h2>
+<pre class="r"><code>x1000 &lt;-  rnorm(1000,0,1)
+mean(x1000)</code></pre>
+<pre><code>## [1] -0.03272243</code></pre>
+<pre class="r"><code>x10000 &lt;- rnorm(10000,0,1)
+mean(x10000)</code></pre>
+<pre><code>## [1] -0.004254936</code></pre>
+<pre class="r"><code>x100000 &lt;-  rnorm(100000,0,1)
+mean(x100000)</code></pre>
+<pre><code>## [1] 0.002199223</code></pre>
+</div>
+<div class="section level2">
+<h2>確率点</h2>
+<pre class="r"><code>quantile(x100000,probs=c(0,0.25,0.33,0.75,1))</code></pre>
+<pre><code>##         0%        25%        33%        75%       100% 
+## -4.5631823 -0.6735926 -0.4335554  0.6758085  5.5830210</code></pre>
+<pre class="r"><code>qnorm(0.25,0,1)</code></pre>
+<pre><code>## [1] -0.6744898</code></pre>
+<pre class="r"><code>qnorm(0.33,0,1)</code></pre>
+<pre><code>## [1] -0.4399132</code></pre>
+<pre class="r"><code>qnorm(0.75,0,1)</code></pre>
+<pre><code>## [1] 0.6744898</code></pre>
+</div>
+<div class="section level2">
+<h2>累積分布；ある数字よりも大きく(小さく)なる確率</h2>
+<pre class="r"><code>length(x100000[x100000&lt;1.96])/length(x100000)</code></pre>
+<pre><code>## [1] 0.97464</code></pre>
+<pre class="r"><code>pnorm(1.96,0,1)</code></pre>
+<pre><code>## [1] 0.9750021</code></pre>
+</div>
+<div class="section level2">
+<h2>可視化</h2>
+<pre class="r"><code># データをデータフレームにまとめる
+data.frame(class=c(rep(1,NROW(x100)),
+                   rep(2,NROW(x1000)),
+                   rep(3,NROW(x10000)),
+                   rep(4,NROW(x100000))),
+           value=c(x100,x1000,x10000,x100000)) %&gt;%
+  # グループ名を作る変数を作成
+  mutate(class=as.factor(class)) %&gt;% 
+  # 作図。x軸は値。グループごとに分けたヒストグラム
+  ggplot(aes(x=value))+geom_histogram(binwidth = 0.1)+xlim(-4,4)+
+  facet_wrap(~class,scales = &quot;free&quot;)</code></pre>
+<pre><code>## Warning: Removed 8 rows containing non-finite values (stat_bin).</code></pre>
+<pre><code>## Warning: Removed 4 rows containing missing values (geom_bar).</code></pre>
+<p><img src="jssp01_files/figure-html/visualize-1.png" width="672" /></p>
+</div>
+<div class="section level2">
+<h2>積分も簡単</h2>
+<pre class="r"><code>NROW(x100000[x100000&gt;0 &amp; x100000 &lt;1])/NROW(x100000)</code></pre>
+<pre><code>## [1] 0.3428</code></pre>
+<pre class="r"><code>data.frame(val=x100000) %&gt;% mutate(itg=ifelse(val&gt;0&amp;val&lt;1,1,2)) %&gt;% 
+  mutate(itg=as.factor(itg)) %&gt;% 
+  ggplot(aes(x=val,fill=itg))+geom_histogram(binwidth = 0.01) + 
+  xlim(-4,4) +theme(legend.position = &#39;none&#39;)</code></pre>
+<pre><code>## Warning: Removed 8 rows containing non-finite values (stat_bin).</code></pre>
+<p><img src="jssp01_files/figure-html/integrals-1.png" width="672" /></p>
+</div>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
