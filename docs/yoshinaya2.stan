@@ -1,6 +1,8 @@
 data{
   int<lower=1> N;
   real X[N];
+  real pre_mu;
+  real pre_sig;
 }
 
 parameters{
@@ -8,10 +10,6 @@ parameters{
 }
 
 model{
-  
-  for(n in 1:N){
-    X[n] ~ normal(mu,9);
-  }
-  
-  mu ~ uniform(0,100);
+  X ~ normal(mu,9);
+  mu ~ normal(pre_mu,pre_sig);
 }

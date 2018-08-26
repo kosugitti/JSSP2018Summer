@@ -28,15 +28,15 @@ old = theme_set(theme_gray(base_family = "HiraKakuProN-W3"))
 
 
 
-# Stanによる乱数の近似
+# Stanによる乱数の近似；パラメータリカバリを通じて
 
-## 乱数のタネを設定
+### 乱数のタネを設定
 
 ```{r}
 set.seed(201808)
 ```
 
-## データを作ってみます
+### データを作ってみます
 
 これが今回の真値です。データを平均59，標準偏差9の正規分布から作っています。
 
@@ -44,13 +44,13 @@ set.seed(201808)
 Y <- round(rnorm(49, 53, 9))
 ```
 
-## 仮想データの中身
+### 仮想データの中身
 
 ```{r}
 Y
 ```
 
-## 仮想データの平均値
+### 仮想データの平均値
 
 ```{r}
 mean(Y)
@@ -60,7 +60,7 @@ mean(Y)
 
 我々はこのようなデータしか手に入らない中で，平均値はどこにあるのかを探ることになります。
 
-## stanモデルコンパイル
+### stanモデルコンパイル
 
 ここでR から Stanへ，「乱数発生器を作れ」との命令が行きます。
 命令を受けたStanはコンパイルを始めます。少し時間がかかるのでお待ちください。
@@ -69,27 +69,27 @@ mean(Y)
 
 警告がたくさん出たとしても，それはコンパイル時の非常にテクニカルな指摘なので気にしなくて結構です。
 
-```{r stan model 1,results="hide"}
-model1 <- stan_model('yoshinaya.stan')
+```{r Stan_model1, message=FALSE, warning=FALSE, paged.print=FALSE, results="hide"}
+model1 <- stan_model("yoshinaya.stan")
 ```
 ```{r, echo=FALSE, eval=TRUE}
 paste(readLines("yoshinaya.stan"), collapse = "\n") %>% cat()
 ```
 
 
-## stanに与えるデータセットを準備
+### stanに与えるデータセットを準備
 
 ```{r}
 dataset <- list(N=49, X=Y)
 ```
 
-## stanをつかってサンプリング
+### stanをつかってサンプリング
 
 ```{r stan sampling1}
 fit <- sampling(model1,dataset)
 ```
 
-## 結果の出力
+### 結果の出力
 
 ```{r}
 print(fit)
@@ -98,32 +98,33 @@ print(fit)
 今回は真値として53の世界からデータが得られていると考えて，モデルを作り，推定値として53.11です。50% confidential inter
 
 
-## 図示
+### 結果の図示
 ```{r visualize2}
-plot(fit,pars='mu',show_density=T)
+plot(fit,pars="mu",show_density=T)
 ```
 
-## パッケージを使って美しく
+### パッケージを使って美しく描きましょう
+
 ```{r visualize using packages}
-bayesplot::mcmc_dens(as.array(fit),pars='mu')
-bayesplot::mcmc_trace(as.array(fit),pars='mu')
-bayesplot::mcmc_areas(as.array(fit,pars='mu'))
+bayesplot::mcmc_dens(as.array(fit),pars="mu")
+bayesplot::mcmc_trace(as.array(fit),pars="mu")
+bayesplot::mcmc_areas(as.array(fit,pars="mu"))
 ```
 
-## MCMCサンプルを取り出す
+### MCMCサンプルを取り出す
 ```{r extract}
-rstan::extract(fit,pars='mu')
+rstan::extract(fit,pars="mu")
 ```
 
-## 取り出したデータセットを処理
+### 取り出したデータセットを見てみる
 ```{r extract to df}
-rstan::extract(fit,pars='mu') %>% data.frame() %>% summary()
+rstan::extract(fit,pars="mu") %>% data.frame() %>% summary()
 
 ```
 
-## 取り出したデータセットを使って
-```{r}
-rstan::extract(fit,pars='mu') %>% data.frame() ->result.df
+### 取り出したデータセットを使って
+```{r extract_gme}
+rstan::extract(fit,pars="mu") %>% data.frame() ->result.df
 # データ数
 NROW(result.df)
 # 任意のパーセンタイル点
@@ -134,14 +135,133 @@ NROW(result.df[result.df$mu>55 & result.df$mu < 60,])/NROW(result.df)
 result.df %>% dplyr::filter(.$mu>55 & .$mu<60) %>% NROW(.)/4000
 ```
 
-## MCMCのサンプルサイズ指定
+# MCMCの様々な特徴
+
+### MCMCサンプルの数が増えると?
+
+```{r N_samp_up}
+## 5000サンプル
+fit5000 <- sampling(model1,dataset,warmup=2500,iter=5000,chains=4,thin=2)
+## 10000サンプル
+fit10000 <- sampling(model1,dataset,warmup=2500,iter=7500,chains=4,thin=2)
+##
+print(fit5000)
+print(fit10000)
+```
+
+### データ数が増えると?
+
+```{r N_up}
+Y1 <- round(rnorm(10, 53, 9))
+Y2 <- round(rnorm(100,53, 9))
+#
+dataset1 <- list(N=10,X=Y1)
+dataset2 <- list(N=100,X=Y2)
+#
+mcmc1 <- sampling(model1,dataset1)
+mcmc2 <- sampling(model1,dataset2)
+#
+print(mcmc1)
+print(mcmc2)
+```
+
+## 事前分布を活かす
+```{r Half_Cut_data}
+# データセット全体
+Y_all <- round(rnorm(30,53,9)) %>% print
+# データセットを半分こ
+Y_pre <- Y_all[1:15] %>% print
+Y_post <- Y_all[16:30] %>% print
+```
+
+```{r stan model 1, message=FALSE, warning=FALSE, paged.print=FALSE, results="hide"}
+model2 <- stan_model("yoshinaya2.stan")
+```
+```{r, echo=FALSE, eval=TRUE}
+paste(readLines("yoshinaya2.stan"), collapse = "\n") %>% cat()
+```
 
 ```{r}
-fit <- sampling(model1,dataset,
-                warmup=5000,
-                iter=100000,
-                chains=3,
-                thin=2)
-fit
+# 全データを使って
+dataAll <- list(N=30,X=Y_all,pre_mu=0,pre_sig=100)
+fit_all <- sampling(model2,dataAll)
+fit_all
+
+# 前半分
+data_pre <- list(N=15,X=Y_pre,pre_mu=0,pre_sig=100)
+fit_pre <- sampling(model2,data_pre)
+# 無情報後ろ半分
+data_post <- list(N=15,X=Y_post,pre_mu=0,pre_sig=100)
+fit_withNoPrior <- sampling(model1,data_post)
+
+# 事前分布の情報を前半分データから取り出す
+rstan::extract(fit_pre,pars="mu") %>% data.frame %>% 
+  gather(key,val) %>% summarize(pre_mu=mean(val),pre_sig=sd(val)) -> Prior_val
+# 事前分布の情報を追記
+data_post2 <- list(N=15,X=Y_post,pre_mu=Prior_val$pre_mu,pre_sig=Prior_val$pre_sig)
+fit_withPrior <- sampling(model2,data_post2)
+
+print(fit_pre)
+print(fit_withNoPrior)
+print(fit_withPrior)
+print(fit_all)
+```
+
+# 事後予測分布を描こう
+
+モデルのチェックにも使える事後予測分布を描く練習です。
+
+```{r Normal_dist, message=FALSE, warning=FALSE, paged.print=FALSE, results="hide"}
+N <- 50
+Z <- rnorm(N,0,1)
+model_norm <- stan_model("normal_PPD.stan")
+```
+
+```{r, echo=FALSE, eval=TRUE}
+paste(readLines("normal_PPD.stan"), collapse = "\n") %>% cat()
+```
+
+```{r sampke_Norm_dist}
+fit.norm <- sampling(model_norm,data=list(N=N,X=Z))
+print(fit.norm)
+```
+
+#### 同時確率空間
+
+今回のモデルは一つの正規分布ですが，パラメータが二つあります。$\mu$と$\sigma$の二つを同時に推定しました。それぞれの分布を描くと次のようになります。
+
+```{r}
+fit.norm.df <- rstan::extract(fit.norm,pars=c("mu","sig")) %>% data.frame
+ggplot(fit.norm.df,aes(x=mu))+geom_histogram(binwidth = 0.01)
+ggplot(fit.norm.df,aes(x=sig))+geom_histogram(binwidth=0.01)
+```
+
+しかしこの二つは，同時に起こり得た乱数の組み合わせセットなのです。同時確率空間からのサンプリングであり，それぞれのパラメータのヒストグラムは「周辺化した」ものになっています。
+
+```{r 同時確率空間}
+library(plotly)
+gg <- rstan::extract(fit.norm,pars=c("mu","sig")) %>% data.frame %>% 
+ ggplot(aes(x = mu, y = sig)) + geom_point()
+ggplotly(gg)
+x_c <- rstan::extract(fit.norm,pars=c("mu")) %>% unlist() %>% cut(., 10)
+y_c <- rstan::extract(fit.norm,pars=c("sig")) %>% unlist() %>% cut(., 10)
+z <- table(x_c, y_c)
+plot_ly(z=z,type='surface')
+```
+
+これはパラメータの数が増えても同じことです。十数個のパラメータであっても，それらが同時に成立しうる組み合わせのセットである，という感覚を持つことは重要です（それぞれのEAP推定値が同時確率空間の中でのEAPになっていないことがある）。
+
+また，周辺化を解析的に行うには積分が必要ですが，MCMCサンプルの場合は**注目したい変数についての集計**をするだけでよく，これがベイズ統計学を一気に実用的なものにした理由でもあります。
+
+
+#### データの分布
+```{r data_dist}
+ggplot(data.frame(val=Z),aes(x=val))+geom_histogram(binwidth = 0.1)
+```
+
+#### 事後予測分布
+```{r PPD}
+rstan::extract(fit.norm,pars="pred") %>% data.frame %>% 
+  ggplot(aes(x=pred))+geom_histogram(binwidth = 0.1)
 ```
 

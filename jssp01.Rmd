@@ -106,7 +106,7 @@ qnorm(0.75,0,1)
 ```
 
 
-## 累積分布；ある数字よりも大きく(小さく)なる確率
+## ある数字よりも大きく(小さく)なる確率
 
 ```{r}
 length(x100000[x100000<1.96])/length(x100000)
@@ -138,7 +138,7 @@ NROW(x100000[x100000>0 & x100000 <1])/NROW(x100000)
 data.frame(val=x100000) %>% mutate(itg=ifelse(val>0&val<1,1,2)) %>% 
   mutate(itg=as.factor(itg)) %>% 
   ggplot(aes(x=val,fill=itg))+geom_histogram(binwidth = 0.01) + 
-  xlim(-4,4) +theme(legend.position = 'none')
+  xlim(-4,4) +theme(legend.position = "none")
 ```
 
 
