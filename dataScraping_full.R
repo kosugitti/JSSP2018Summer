@@ -87,6 +87,7 @@ dat3 %>% as_tibble() %>% mutate_at(c(3:20),funs(as.numeric(.))) %>%
 
 # 統合 ----------------------------------------------------------------------
 
+Cleague <- c("Carp", "DeNA", "Dragons", "Giants", "Swallows", "Tigers")
 
 dat1 %>% full_join(.,full_join(dat2,dat3,by=c("選手名","team","試合","背番号")),
                    by=c("Name"="選手名","team")) %>% 
@@ -97,8 +98,9 @@ dat1 %>% full_join(.,full_join(dat2,dat3,by=c("選手名","team","試合","背�
   mutate(team =fct_recode(team,'Tigers'='t','Carp'='c','Giants'='g','DeNA'='yb',
              'Dragons'='d','Swallows'='s','Softbank'='h','Lions'='l',
              'Eagles'='e','Orix'='bs','Fighters'='f','Lotte'='m')) %>% 
-  rename(セーブ=セlブ,
-            ホールド=ホlルド) -> baseball
+  rename(セーブ=セlブ,ホールド=ホlルド) %>% 
+  mutate(league = factor(ifelse(team %in% Cleague,1, 2), labels = c("C", "P"))) -> baseball
+
 
 # write_csv(baseball,path = "baseball.csv")
 # rm(list=ls())

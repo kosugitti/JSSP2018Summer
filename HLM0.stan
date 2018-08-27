@@ -1,29 +1,24 @@
 data{
-  int<lower=0> L;
-  int<lower=0> G; //グループ数
+  int<lower=0> L; // data length
+  int<lower=0> G; //number of maximim groups
   real X[L];
   real Y[L];
-  int Idx[L];
+  int Idx[L]; // index of team
 }
 
 parameters{
   real beta_0;
   real beta_1[G];
-  real mu_beta1;
   real<lower=0> sigma[G];
-  real<lower=0> tau;
 }
 
 model{
   for(l in 1:L){
     Y[l] ~ normal(beta_0 + beta_1[Idx[l]] * X[l], sigma[Idx[l]]);
   }
-  
-  beta_1 ~ normal(mu_beta1,tau);
   beta_0 ~ normal(0,100);
-  sigma ~ cauchy(0,5);  
-  mu_beta1 ~ normal(0,100);
-  tau ~ cauchy(0,5);
+  beta_1 ~ normal(0,100);
+  sigma ~ cauchy(0,5);
 }
 
 generated quantities{

@@ -16,8 +16,15 @@ install.packages('summarytools')
 install.packages('gridExtra')
 install.packages('GGally')
 install.packages('loo')
+install.packages('plotly')
 ```
 
+## サンプルデータ
+
+レクチャーで使うサンプルデータは次の二つです。ダウンロードしてプロジェクトフォルダに保存して下さい。
+
+ + [baseball.csv](baseball.csv)
+ + [changepointdata.txt](changepointdata.txt)
 
 ## [乱数による分布の近似](jssp01.html)
 
@@ -52,5 +59,16 @@ install.packages('loo')
 
 ## 実践編；線形モデルの展開
 
+ + 回帰分析の確率モデル
+ + Stanで回帰分析を実行する
+ + ロジスティック回帰分析
+ + 一般化線形モデル
+ + 階層線形モデル
 
 ## 実践編；確率モデルは面白い
+
+ + 7人の科学者
+ + 打ち切りデータ
+ + 変化点の検出
+ + 飛行機を再捕獲する
+

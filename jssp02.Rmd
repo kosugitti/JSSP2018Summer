@@ -33,6 +33,7 @@ old = theme_set(theme_gray(base_family = "HiraKakuProN-W3"))
 ### 乱数のタネを設定
 
 ```{r}
+# シード値を固定すると再現できる（擬似乱数なので）
 set.seed(201808)
 ```
 
@@ -70,6 +71,7 @@ mean(Y)
 警告がたくさん出たとしても，それはコンパイル時の非常にテクニカルな指摘なので気にしなくて結構です。
 
 ```{r Stan_model1, message=FALSE, warning=FALSE, paged.print=FALSE, results="hide"}
+# stan_model関数によるコンパイル
 model1 <- stan_model("yoshinaya.stan")
 ```
 ```{r, echo=FALSE, eval=TRUE}
@@ -80,12 +82,14 @@ paste(readLines("yoshinaya.stan"), collapse = "\n") %>% cat()
 ### stanに与えるデータセットを準備
 
 ```{r}
+# データセットはリスト型で渡す
 dataset <- list(N=49, X=Y)
 ```
 
 ### stanをつかってサンプリング
 
 ```{r stan sampling1}
+# サンプリング関数でMCMCサンプルを作成(；´Д｀)ﾊｱﾊｱs
 fit <- sampling(model1,dataset)
 ```
 
@@ -106,6 +110,8 @@ plot(fit,pars="mu",show_density=T)
 ### パッケージを使って美しく描きましょう
 
 ```{r visualize using packages}
+# ベイズプロットパッケージ
+## stanfitオブジェクトをarray型にして渡す必要がある
 bayesplot::mcmc_dens(as.array(fit),pars="mu")
 bayesplot::mcmc_trace(as.array(fit),pars="mu")
 bayesplot::mcmc_areas(as.array(fit,pars="mu"))
@@ -113,13 +119,15 @@ bayesplot::mcmc_areas(as.array(fit,pars="mu"))
 
 ### MCMCサンプルを取り出す
 ```{r extract}
+# rstanパッケージのextract関数
+## extract関数は他のパッケージでも同名のものがある
 rstan::extract(fit,pars="mu")
 ```
 
 ### 取り出したデータセットを見てみる
 ```{r extract to df}
+# パイプ演算子( %>% )は次の関数の第一引数に橋渡しする
 rstan::extract(fit,pars="mu") %>% data.frame() %>% summary()
-
 ```
 
 ### 取り出したデータセットを使って
@@ -152,15 +160,16 @@ print(fit10000)
 ### データ数が増えると?
 
 ```{r N_up}
+# データを二つ用意。サンプルサイズ10のY1と100のY2
 Y1 <- round(rnorm(10, 53, 9))
 Y2 <- round(rnorm(100,53, 9))
-#
+# リスト型で渡す
 dataset1 <- list(N=10,X=Y1)
 dataset2 <- list(N=100,X=Y2)
-#
+# 同じモデルでサンプリング（データが異なる）
 mcmc1 <- sampling(model1,dataset1)
 mcmc2 <- sampling(model1,dataset2)
-#
+# 結果の表示
 print(mcmc1)
 print(mcmc2)
 ```
@@ -201,6 +210,7 @@ rstan::extract(fit_pre,pars="mu") %>% data.frame %>%
 data_post2 <- list(N=15,X=Y_post,pre_mu=Prior_val$pre_mu,pre_sig=Prior_val$pre_sig)
 fit_withPrior <- sampling(model2,data_post2)
 
+# 各条件の出力を比較
 print(fit_pre)
 print(fit_withNoPrior)
 print(fit_withPrior)
@@ -212,6 +222,7 @@ print(fit_all)
 モデルのチェックにも使える事後予測分布を描く練習です。
 
 ```{r Normal_dist, message=FALSE, warning=FALSE, paged.print=FALSE, results="hide"}
+# 標準正規分布のデータを作成
 N <- 50
 Z <- rnorm(N,0,1)
 model_norm <- stan_model("normal_PPD.stan")
@@ -222,6 +233,7 @@ paste(readLines("normal_PPD.stan"), collapse = "\n") %>% cat()
 ```
 
 ```{r sampke_Norm_dist}
+# MCMC！
 fit.norm <- sampling(model_norm,data=list(N=N,X=Z))
 print(fit.norm)
 ```
@@ -239,10 +251,13 @@ ggplot(fit.norm.df,aes(x=sig))+geom_histogram(binwidth=0.01)
 しかしこの二つは，同時に起こり得た乱数の組み合わせセットなのです。同時確率空間からのサンプリングであり，それぞれのパラメータのヒストグラムは「周辺化した」ものになっています。
 
 ```{r 同時確率空間}
+# ポイントを有効にするためにplotlyパッケージを使う
 library(plotly)
+# ggplotのオブジェクトをplotlyの関数に渡すだけ
 gg <- rstan::extract(fit.norm,pars=c("mu","sig")) %>% data.frame %>% 
  ggplot(aes(x = mu, y = sig)) + geom_point()
 ggplotly(gg)
+## 三次元表示
 x_c <- rstan::extract(fit.norm,pars=c("mu")) %>% unlist() %>% cut(., 10)
 y_c <- rstan::extract(fit.norm,pars=c("sig")) %>% unlist() %>% cut(., 10)
 z <- table(x_c, y_c)

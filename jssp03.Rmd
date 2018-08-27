@@ -1,4 +1,295 @@
 ---
-title: "乱数による分布の近似"
+title: "実践編；帰無仮説検定はこう変わる"
 ---
+```{r libraries,echo=F,include=F}
+# データ整形汎用パッケージ
+library(tidyverse)
+# MCMC乱数発生器stanをRからつかうパッケージ
+library(rstan)
+# rstanを並列で使うオプション
+options(mc.cores = parallel::detectCores())
+# 変更なしの実行ファイルは保存しておくオプション
+rstan_options(auto_write = TRUE)
+# データ要約・可視化パッケージ
+library(summarytools)
+# 複数のグラフを並べて表示するパッケージ
+library(gridExtra)
+library(GGally)
+# ベイズモデル比較指標計算パッケージ
+library(loo)
+# ベイズモデルの結果を可視化するパッケージ
+library(bayesplot)
+# 描画の際に文字化けするMacユーザは次の行のコメントアウトをとって実行する
+old = theme_set(theme_gray(base_family = "HiraKakuProN-W3"))
+```
+#### サンプルデータセット
+
+2017年の野球選手データをwebからスクレイピングして来た次のデータセットを使います。
+
+```{r read_sample_dataset}
+bs <- read_csv("baseball.csv")
+summarytools::dfSummary(bs) %>% view
+# 可視化
+bs %>% filter(position != "投手") %>% 
+  dplyr::select(salary,years, height, weight) %>% ggpairs()
+
+bs %>% filter(position == "投手") %>% 
+  dplyr::select(salary,years, height, weight) %>% ggpairs()
+```
+
+
+# 帰無仮説検定はこう変わる
+
+#### 平均値のモデリング
+
+独立な2群のt検定は，二つの独立な正規分布を仮定しているので，それぞれの正規分布の推定で良い。
+
+### いわゆるt検定
+```{r}
+# 体重とリーグのデータだけ取り出す
+df <- bs %>% select("weight","league") %>% na.omit
+# 分散の等質の検定
+var.test(weight ~ league, data = df)
+# 等分散性を仮定したt検定
+t.test(weight ~ league, data = df, var.equal=T)
+```
+
+### ベイズ的alternative
+
+```{r,results='hide'}
+model_ttest <- stan_model("ttest_var_equal.stan")
+```
+
+```{r, echo=FALSE, eval=TRUE}
+paste(readLines("ttest_var_equal.stan"), collapse = "\n") %>% cat()
+```
+
+```{r}
+# データをリスト型で渡す。
+## N1は第一群のサンプルサイズ（該当する行の数）
+## N2は第二群のサンプルサイズ（該当する行の数）
+## X1は第一群のデータ（該当する行の該当する変数）
+## X2は第二群のデータ（該当する行の該当する変数）
+dataset.t <- list(N1 = NROW(df[df$league == "C", ]), 
+                N2 = NROW(df[df$league == "P", ]),
+                X1 = unlist(df[df$league == "C", "weight"]),
+                X2 = unlist(df[df$league == "P", "weight"]))
+# MCMC!
+bayes_ttest <- sampling(model_ttest, dataset.t)
+# 表示
+bayes_ttest
+```
+```{r}
+plot(bayes_ttest, pars = c("mu1", "mu2"), show_density = TRUE)
+```
+
+### 可視化
+```{r}
+# 該当する変数を抽出
+rstan::extract(bayes_ttest, pars = c("mu1", "mu2")) %>% 
+  # データフレーム型に  
+  data.frame %>% 
+  # ロング型に成形
+  gather(key, val, factor_key = TRUE) %>%
+  # 描画
+  ggplot(aes(x = val, group = key, fill = key)) + 
+  # 透過度alpha=0.5
+  geom_histogram(binwidth = 0.01, alpha = 0.5)
+```
+
+### 異分散のt検定
+```{r,results='hide'}
+model.ttest2 <- stan_model("ttest_var_different.stan")
+```
+
+```{r, echo=FALSE, eval=TRUE}
+paste(readLines("ttest_var_different.stan"), collapse = "\n") %>% cat()
+```
+
+```{r var_diff}
+bayes_ttest2 <- sampling(model_ttest, dataset.t)
+bayes_ttest2
+```
+
+
+### 差の分布
+```{r,results='hide'}
+ttest2 <- stan_model("ttest2.stan")
+```
+
+```{r, echo=FALSE, eval=TRUE}
+paste(readLines("ttest2.stan"), collapse = "\n") %>% cat()
+```
+
+```{r}
+result.ttest <- sampling(ttest2, dataset.t)
+result.ttest
+# 差の分布の描画
+rstan::extract(result.ttest, pars = "d") %>% data.frame() %>% 
+  ggplot(aes(x = d)) + geom_density()
+
+```
+
+
+### 様々な仮説を検討することができる
+
+```{r}
+df <- rstan::extract(result.ttest, pars = "d") %>% data.frame
+# 該当する行数/総行数
+NROW(df[df$d > 0, ])/NROW(df)
+NROW(df[(df$d > -2) & (df$d < (-1)), ])/NROW(df)
+```
+
+ポイントは「差が0であるかどうか」だけに注目するのではなく，差がどの程度あるか，ある大きさ以上の差がある確率はどれぐらいか，といった仮説も検証できると言うところです。NHSTは$\mu_1 \neq \mu_2$だけが考察の対象でしたが，$\mu_1 < \mu_2$のような不等号をもった仮説も検証できるのです(情報仮説と言います)。
+
+#### 生成量で変わる仮説のたてかた
+
+ここでは生成量を使って様々な仮説を検証する方法について説明します。
+
+##### 効果量を求める
+```{r ttestコードを拡張}
+model_ttest3 <- stan_model("ttest3.stan")
+bayes_ttest3 <- sampling(model_ttest3, dataset.t)
+```
+
+##### 効果量
+
+効果量は平均値の差を標準偏差で割ったもの。標準偏差を各群で推定している場合，プールした標準偏差に変える必要があります。
+
+```{r cohen_D}
+# stanfitオブジェクトから必要そうな変数だけ抜き出しておく
+result.ttest2 <- rstan::extract(bayes_ttest3,pars=c("mu","d","sig1","sig2","pred1","pred2")) %>% data.frame
+
+# 差と標準偏差を抜き出す
+result.ttest2 %>% select("d","sig1","sig2") %>% 
+  # プールされた標準偏差を計算
+  mutate(poolS = ((sig1*dataset.t$N1)+(sig2*dataset.t$N2))/
+                    (dataset.t$N1+dataset.t$N2)) %>%
+  # 差を標準偏差で割ると効果量
+  mutate(cohenD = d/poolS) %>% summary()
+```
+
+同じことは生成量を使ってもできます。
+
+```{r}
+model_ttest4 <- stan_model("ttest4.stan")
+bayes_ttest4 <- sampling(model_ttest4, dataset.t)
+bayes_ttest4
+```
+
+##### 群1, 2の平均値の差が基準点cより大きい/小さい確率
+
+```{r}
+## 全データ数
+NROW(result.ttest2)
+## 差が2.5cm以上生じる確率
+NROW(result.ttest2 %>% filter(abs(.$d)>2.5))/NROW(result.ttest2)
+```
+
+この他，「効果量が基準点cより大きい確率」なども同様に検討することができます。
+
+
+事後予測分布を使って，今後のデータがどのようになるだろうか，という仮説を立てることも可能です。
+
+```{r Hypothesis_PPD}
+## (今後の)セリーグの選手がパリーグの選手よりも体重が大きい確率
+sum(result.ttest2$pred1>result.ttest2$pred2)/NROW(result.ttest2)
+## (今後の)セリーグの選手がパリーグの選手よりも体重が5kg大きい確率
+sum(result.ttest2$pred1>(result.ttest2$pred2+5))/NROW(result.ttest2)
+```
+
+理解のポイントは次の三点です。
+
++ パラメータについての仮説とデータについての予測の違いを理解し，いずれの値についての仮説を立てることも可能。
++ 事後分布・事後予測分布の具体的なサンプルの記述・変数の生成で議論でき，それ以外の統計的仮定を必要としていない
++ `generated quantities` ブロックで生成しても良いし，MCMCサンプルから変数を作っても良い
+
+事後分布の検証について，あくまでも同時確率空間の中での比較の集計(同じ行についておの比較の集計)であることに注意してください。
+
+#### 事後対数尤度
+
+(対数)尤度はモデルとデータの当てはまりの程度です。事後対数尤度とは，パラメータの推定が終わった後(事後)，各サンプルから考えられる尤度の一覧であり，「当てはまりの程度」であることから，モデル適合度の検証に使える指標となります。
+
+例えば，t検定で分散が等質であるという仮定を置いた場合と，その仮定を置かない場合のモデル比較を考えます。
+
+生成量で事後対数尤度を算出します。
+
+```{r log_lik}
+# log_likを計算するコード
+modelA <- stan_model("ttest5a.stan",model_name="var_equal")
+modelB <- stan_model("ttest5b.stan",model_name="var_not_equal")
+# サンプル生成
+resultA <- sampling(modelA, dataset.t)
+resultB <- sampling(modelB, dataset.t)
+# 事後対数尤度の抽出
+resultA %>% rstan::extract(pars="log_lik") -> log_likA
+resultB %>% rstan::extract(pars="log_lik") -> log_likB
+# パッケージの読み込み
+library(loo)
+loo(log_likA$log_lik)
+loo(log_likB$log_lik)
+```
+
+#### 対応のあるt検定
+
+対応のあるt検定の場合は，二変数間の相関係数を考慮する必要があります。相関係数をモデル化するためには，多変量正規分布を考える必要があります。
+
+それを踏まえて，対応のある二群の関係をモデリングするには次のようにします。
+
+
+```{r,results='hide'}
+P_ttest.model <- stan_model("pairedT.stan")
+```
+
+```{r, echo=FALSE, eval=TRUE}
+paste(readLines("pairedT.stan"), collapse = "\n") %>% cat()
+```
+
+
+#### 相関係数の検定
+
+対応のある二群の平均値を比較することもできますし，モデルが示すように相関係数も同時に推定できますので，ここでは相関係数に注目して推定値を確認したいと思います。
+
+野球選手の身長と体重の相関係数を推定します。
+
+```{r}
+# 身長・体重・リーグ情報だけ抜き出す
+df <- bs %>% select("weight","height","league") %>% na.omit()
+# 描画
+df %>% ggplot(aes(x = height, y = weight,color=league)) + geom_point()
+cor(df[,1:2])
+```
+
+```{r 相関係数の推定}
+data.cor <- list(L = NROW(df), X = df[,1:2])
+cor.fit <- sampling(P_ttest.model,data.cor)
+```
+
+平均の差や無相関かどうかを検証するのは，これまで同様，事後分布の確信区間で検証できます。
+
+#### 分散分析のモデリング
+
+分散分析のことをベイジアン的にアプローチする場合，一要因の場合はこれまでの応用で，以下のように考えます。
+
+ + Between designは独立した分布から来ている群の平均値差を考えるので，群の数だけ正規分布を想定する。
+ + Within designは多次元正規分布から来ている群の平均値差を考えるので，水準の数だけ次元のある多次元正規分布空間を考える。
+
+例えば，水準数が増えた時の一般的なWithin designのコードは次のようになります。
+
+```{r, echo=FALSE, eval=TRUE}
+paste(readLines("corr.stan"), collapse = "\n") %>% cat()
+```
+
+分散共分散行列の要素を推定しているので，`球面性の検定`など分布の仮定や**補正に留意する必要はありません**。
+
+また，二要因以上になる場合は交互作用項をデザインする必要がありますが，その際は分散分析におけるデータの組成をリバースエンジニアリングし，それをデータ生成モデルとしてStanで表現すれば良いでしょう。
+
+参考；[心理統計の課題をRmdで作る](https://www.slideshare.net/KojiKosugi/rmd-67205625)
+
+### 補遺
+
+JASPというソフトウェアを使うと，GUIで平均値差の検定を行うことができます。Bayesian ANOVAにも対応している大変優れたソフトです。
+
+参考；[心理学者のためのJASP入門(操作編)](https://www.slideshare.net/daikihojo/jasp-89875504)
+
 
