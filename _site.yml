@@ -12,8 +12,8 @@ navbar:
       href: jssp03.html
     - text: "Lesson4"
       href: jssp04.html      
-#    - text: "Lesson5"
-#      href: jssp05.html
+    - text: "Lesson5"
+      href: jssp05.html
 
 output:
   html_document:
