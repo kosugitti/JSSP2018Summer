@@ -11,7 +11,7 @@
 
 
 
-<title>乱数による分布の近似</title>
+<title>実践編；帰無仮説検定はこう変わる</title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -306,12 +306,529 @@ div.tocify {
 
 
 
-<h1 class="title toc-ignore">乱数による分布の近似</h1>
+<h1 class="title toc-ignore">実践編；帰無仮説検定はこう変わる</h1>
 
 </div>
 
 
+<div class="section level4">
+<h4>サンプルデータセット</h4>
+<p>2017年の野球選手データをwebからスクレイピングして来た次のデータセットを使います。</p>
+<pre class="r"><code>bs &lt;- read_csv(&quot;baseball.csv&quot;)</code></pre>
+<pre><code>## Parsed with column specification:
+## cols(
+##   .default = col_integer(),
+##   Name = col_character(),
+##   team = col_character(),
+##   salary = col_double(),
+##   position = col_character(),
+##   bloodType = col_character(),
+##   throw.by = col_character(),
+##   batting.by = col_character(),
+##   birth.place = col_character(),
+##   birth.day = col_date(format = &quot;&quot;),
+##   背番号 = col_character(),
+##   打率 = col_double(),
+##   出塁率 = col_double(),
+##   長打率 = col_double(),
+##   OPS = col_double(),
+##   RC27 = col_double(),
+##   XR27 = col_double(),
+##   防御率 = col_double(),
+##   勝率 = col_double(),
+##   投球回 = col_double(),
+##   WHIP = col_double()
+##   # ... with 2 more columns
+## )</code></pre>
+<pre><code>## See spec(...) for full column specifications.</code></pre>
+<pre class="r"><code>summarytools::dfSummary(bs) %&gt;% view</code></pre>
+<pre><code>## Method &#39;viewer&#39; only valid within RStudio. Switching method to &#39;browser&#39;.</code></pre>
+<pre><code>## Output file written: /var/folders/jr/fj1hq52s2_q59dk3tw7tzl3m0000gn/T//Rtmp0VvJmm/file18903f05c9c4.html</code></pre>
+<pre class="r"><code># 可視化
+bs %&gt;% filter(position != &quot;投手&quot;) %&gt;% 
+  dplyr::select(salary,years, height, weight) %&gt;% ggpairs()</code></pre>
+<p><img src="jssp03_files/figure-html/read_sample_dataset-1.png" width="672" /></p>
+<pre class="r"><code>bs %&gt;% filter(position == &quot;投手&quot;) %&gt;% 
+  dplyr::select(salary,years, height, weight) %&gt;% ggpairs()</code></pre>
+<p><img src="jssp03_files/figure-html/read_sample_dataset-2.png" width="672" /></p>
+</div>
+<div class="section level1">
+<h1>帰無仮説検定はこう変わる</h1>
+<div class="section level4">
+<h4>平均値のモデリング</h4>
+<p>独立な2群のt検定は，二つの独立な正規分布を仮定しているので，それぞれの正規分布の推定で良い。</p>
+</div>
+<div id="t" class="section level3">
+<h3>いわゆるt検定</h3>
+<pre class="r"><code># 体重とリーグのデータだけ取り出す
+df &lt;- bs %&gt;% select(&quot;weight&quot;,&quot;league&quot;) %&gt;% na.omit
+# 分散の等質の検定
+var.test(weight ~ league, data = df)</code></pre>
+<pre><code>## 
+##  F test to compare two variances
+## 
+## data:  weight by league
+## F = 0.96886, num df = 457, denom df = 459, p-value = 0.7351
+## alternative hypothesis: true ratio of variances is not equal to 1
+## 95 percent confidence interval:
+##  0.8065286 1.1638969
+## sample estimates:
+## ratio of variances 
+##          0.9688556</code></pre>
+<pre class="r"><code># 等分散性を仮定したt検定
+t.test(weight ~ league, data = df, var.equal=T)</code></pre>
+<pre><code>## 
+##  Two Sample t-test
+## 
+## data:  weight by league
+## t = 1.7639, df = 916, p-value = 0.07809
+## alternative hypothesis: true difference in means is not equal to 0
+## 95 percent confidence interval:
+##  -0.1192178  2.2358687
+## sample estimates:
+## mean in group C mean in group P 
+##        84.41485        83.35652</code></pre>
+</div>
+<div id="alternative" class="section level3">
+<h3>ベイズ的alternative</h3>
+<pre class="r"><code>model_ttest &lt;- stan_model(&quot;ttest_var_equal.stan&quot;)</code></pre>
+<pre><code>## data{
+##   int&lt;lower=1&gt; N1;
+##   int&lt;lower=1&gt; N2;
+##   real X1[N1];
+##   real X2[N2];
+## }
+## 
+## parameters{
+##   real mu1;
+##   real mu2;
+##   real&lt;lower=0&gt; sig;
+## }
+## 
+## model{
+##   // likelihood
+##   X1 ~ normal(mu1,sig);
+##   X2 ~ normal(mu2,sig);
+##   // prior
+##   mu1 ~ normal(0,100);
+##   mu2 ~ normal(0,100);
+##   sig ~ cauchy(0,5);
+## }</code></pre>
+<pre class="r"><code># データをリスト型で渡す。
+## N1は第一群のサンプルサイズ（該当する行の数）
+## N2は第二群のサンプルサイズ（該当する行の数）
+## X1は第一群のデータ（該当する行の該当する変数）
+## X2は第二群のデータ（該当する行の該当する変数）
+dataset.t &lt;- list(N1 = NROW(df[df$league == &quot;C&quot;, ]), 
+                N2 = NROW(df[df$league == &quot;P&quot;, ]),
+                X1 = unlist(df[df$league == &quot;C&quot;, &quot;weight&quot;]),
+                X2 = unlist(df[df$league == &quot;P&quot;, &quot;weight&quot;]))
+# MCMC!
+bayes_ttest &lt;- sampling(model_ttest, dataset.t)
+# 表示
+bayes_ttest</code></pre>
+<pre><code>## Inference for Stan model: ttest_var_equal.
+## 4 chains, each with iter=2000; warmup=1000; thin=1; 
+## post-warmup draws per chain=1000, total post-warmup draws=4000.
+## 
+##          mean se_mean   sd     2.5%      25%      50%      75%    97.5%
+## mu1     84.42    0.01 0.43    83.56    84.12    84.42    84.70    85.24
+## mu2     83.35    0.01 0.43    82.51    83.06    83.34    83.64    84.23
+## sig      9.09    0.00 0.22     8.69     8.94     9.08     9.23     9.53
+## lp__ -2485.64    0.03 1.25 -2488.75 -2486.22 -2485.31 -2484.71 -2484.21
+##      n_eff Rhat
+## mu1   3201    1
+## mu2   3594    1
+## sig   3974    1
+## lp__  1933    1
+## 
+## Samples were drawn using NUTS(diag_e) at Mon Aug 27 17:34:25 2018.
+## For each parameter, n_eff is a crude measure of effective sample size,
+## and Rhat is the potential scale reduction factor on split chains (at 
+## convergence, Rhat=1).</code></pre>
+<pre class="r"><code>plot(bayes_ttest, pars = c(&quot;mu1&quot;, &quot;mu2&quot;), show_density = TRUE)</code></pre>
+<pre><code>## ci_level: 0.8 (80% intervals)</code></pre>
+<pre><code>## outer_level: 0.95 (95% intervals)</code></pre>
+<p><img src="jssp03_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+</div>
+<div class="section level3">
+<h3>可視化</h3>
+<pre class="r"><code># 該当する変数を抽出
+rstan::extract(bayes_ttest, pars = c(&quot;mu1&quot;, &quot;mu2&quot;)) %&gt;% 
+  # データフレーム型に  
+  data.frame %&gt;% 
+  # ロング型に成形
+  gather(key, val, factor_key = TRUE) %&gt;%
+  # 描画
+  ggplot(aes(x = val, group = key, fill = key)) + 
+  # 透過度alpha=0.5
+  geom_histogram(binwidth = 0.01, alpha = 0.5)</code></pre>
+<p><img src="jssp03_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+</div>
+<div id="t" class="section level3">
+<h3>異分散のt検定</h3>
+<pre class="r"><code>model.ttest2 &lt;- stan_model(&quot;ttest_var_different.stan&quot;)</code></pre>
+<pre><code>## data{
+##   int&lt;lower=1&gt; N1;
+##   int&lt;lower=1&gt; N2;
+##   real X1[N1];
+##   real X2[N2];
+## }
+## 
+## parameters{
+##   real mu1;
+##   real mu2;
+##   real&lt;lower=0&gt; sig1;
+##   real&lt;lower=0&gt; sig2;
+## }
+## 
+## model{
+##   // likelihood
+##   X1 ~ normal(mu1,sig1);
+##   X2 ~ normal(mu2,sig2);
+##   
+##   // prior
+##   mu1 ~ normal(0,100);
+##   mu2 ~ normal(0,100);
+##   sig1 ~ cauchy(0,5);
+##   sig2 ~ cauchy(0,5);
+## }</code></pre>
+<pre class="r"><code>bayes_ttest2 &lt;- sampling(model_ttest, dataset.t)
+bayes_ttest2</code></pre>
+<pre><code>## Inference for Stan model: ttest_var_equal.
+## 4 chains, each with iter=2000; warmup=1000; thin=1; 
+## post-warmup draws per chain=1000, total post-warmup draws=4000.
+## 
+##          mean se_mean   sd     2.5%      25%      50%      75%    97.5%
+## mu1     84.40    0.01 0.42    83.58    84.11    84.40    84.69    85.21
+## mu2     83.35    0.01 0.43    82.53    83.07    83.35    83.65    84.18
+## sig      9.09    0.00 0.20     8.69     8.95     9.09     9.22     9.49
+## lp__ -2485.56    0.03 1.18 -2488.65 -2486.05 -2485.29 -2484.71 -2484.22
+##      n_eff Rhat
+## mu1   4000    1
+## mu2   4000    1
+## sig   4000    1
+## lp__  1735    1
+## 
+## Samples were drawn using NUTS(diag_e) at Mon Aug 27 17:34:30 2018.
+## For each parameter, n_eff is a crude measure of effective sample size,
+## and Rhat is the potential scale reduction factor on split chains (at 
+## convergence, Rhat=1).</code></pre>
+</div>
+<div class="section level3">
+<h3>差の分布</h3>
+<pre class="r"><code>ttest2 &lt;- stan_model(&quot;ttest2.stan&quot;)</code></pre>
+<pre><code>## data{
+##   int&lt;lower=0&gt; N1;
+##   int&lt;lower=1&gt; N2;
+##   real X1[N1];
+##   real X2[N2];
+## }
+## 
+## parameters{
+##   real mu;
+##   real&lt;lower=0&gt; sig1;
+##   real&lt;lower=0&gt; sig2;
+##   real d;
+## }
+## 
+## model{
+##   // likelihood
+##   X1 ~ normal(mu,sig1);
+##   X2 ~ normal(mu+d,sig2);
+##   // prior
+##   mu ~ normal(0,100);
+##   sig1 ~ cauchy(0,5);
+##   sig2 ~ cauchy(0,5);
+##   d ~ uniform(-50,50);
+## }</code></pre>
+<pre class="r"><code>result.ttest &lt;- sampling(ttest2, dataset.t)
+result.ttest</code></pre>
+<pre><code>## Inference for Stan model: ttest2.
+## 4 chains, each with iter=2000; warmup=1000; thin=1; 
+## post-warmup draws per chain=1000, total post-warmup draws=4000.
+## 
+##          mean se_mean   sd     2.5%      25%      50%      75%    97.5%
+## mu      84.41    0.01 0.43    83.58    84.13    84.40    84.69    85.24
+## sig1     9.02    0.01 0.30     8.47     8.82     9.02     9.22     9.62
+## sig2     9.17    0.00 0.29     8.63     8.96     9.15     9.36     9.78
+## d       -1.04    0.01 0.61    -2.24    -1.45    -1.05    -0.64     0.16
+## lp__ -2484.93    0.03 1.40 -2488.30 -2485.64 -2484.64 -2483.88 -2483.21
+##      n_eff Rhat
+## mu    3038    1
+## sig1  3311    1
+## sig2  4000    1
+## d     3048    1
+## lp__  1741    1
+## 
+## Samples were drawn using NUTS(diag_e) at Mon Aug 27 17:34:33 2018.
+## For each parameter, n_eff is a crude measure of effective sample size,
+## and Rhat is the potential scale reduction factor on split chains (at 
+## convergence, Rhat=1).</code></pre>
+<pre class="r"><code># 差の分布の描画
+rstan::extract(result.ttest, pars = &quot;d&quot;) %&gt;% data.frame() %&gt;% 
+  ggplot(aes(x = d)) + geom_density()</code></pre>
+<p><img src="jssp03_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+</div>
+<div class="section level3">
+<h3>様々な仮説を検討することができる</h3>
+<pre class="r"><code>df &lt;- rstan::extract(result.ttest, pars = &quot;d&quot;) %&gt;% data.frame
+# 該当する行数/総行数
+NROW(df[df$d &gt; 0, ])/NROW(df)</code></pre>
+<pre><code>## [1] 0.04225</code></pre>
+<pre class="r"><code>NROW(df[(df$d &gt; -2) &amp; (df$d &lt; (-1)), ])/NROW(df)</code></pre>
+<pre><code>## [1] 0.47175</code></pre>
+<p>ポイントは「差が0であるかどうか」だけに注目するのではなく，差がどの程度あるか，ある大きさ以上の差がある確率はどれぐらいか，といった仮説も検証できると言うところです。NHSTは<span class="math inline">\(\mu_1 \neq \mu_2\)</span>だけが考察の対象でしたが，<span class="math inline">\(\mu_1 &lt; \mu_2\)</span>のような不等号をもった仮説も検証できるのです(情報仮説と言います)。</p>
+<div class="section level4">
+<h4>生成量で変わる仮説のたてかた</h4>
+<p>ここでは生成量を使って様々な仮説を検証する方法について説明します。</p>
+<div class="section level5">
+<h5>効果量を求める</h5>
+<pre class="r"><code>model_ttest3 &lt;- stan_model(&quot;ttest3.stan&quot;)
+bayes_ttest3 &lt;- sampling(model_ttest3, dataset.t)</code></pre>
+</div>
+<div class="section level5">
+<h5>効果量</h5>
+<p>効果量は平均値の差を標準偏差で割ったもの。標準偏差を各群で推定している場合，プールした標準偏差に変える必要があります。</p>
+<pre class="r"><code># stanfitオブジェクトから必要そうな変数だけ抜き出しておく
+result.ttest2 &lt;- rstan::extract(bayes_ttest3,pars=c(&quot;mu&quot;,&quot;d&quot;,&quot;sig1&quot;,&quot;sig2&quot;,&quot;pred1&quot;,&quot;pred2&quot;)) %&gt;% data.frame
 
+# 差と標準偏差を抜き出す
+result.ttest2 %&gt;% select(&quot;d&quot;,&quot;sig1&quot;,&quot;sig2&quot;) %&gt;% 
+  # プールされた標準偏差を計算
+  mutate(poolS = ((sig1*dataset.t$N1)+(sig2*dataset.t$N2))/
+                    (dataset.t$N1+dataset.t$N2)) %&gt;%
+  # 差を標準偏差で割ると効果量
+  mutate(cohenD = d/poolS) %&gt;% summary()</code></pre>
+<pre><code>##        d                sig1             sig2            poolS      
+##  Min.   :-3.4918   Min.   : 7.971   Min.   : 8.075   Min.   :8.343  
+##  1st Qu.:-1.4612   1st Qu.: 8.821   1st Qu.: 8.968   1st Qu.:8.952  
+##  Median :-1.0535   Median : 9.025   Median : 9.157   Median :9.101  
+##  Mean   :-1.0565   Mean   : 9.029   Mean   : 9.169   Mean   :9.099  
+##  3rd Qu.:-0.6607   3rd Qu.: 9.231   3rd Qu.: 9.361   3rd Qu.:9.242  
+##  Max.   : 0.7572   Max.   :10.217   Max.   :10.319   Max.   :9.880  
+##      cohenD        
+##  Min.   :-0.38521  
+##  1st Qu.:-0.16059  
+##  Median :-0.11620  
+##  Mean   :-0.11623  
+##  3rd Qu.:-0.07265  
+##  Max.   : 0.08071</code></pre>
+<p>同じことは生成量を使ってもできます。</p>
+<pre class="r"><code>model_ttest4 &lt;- stan_model(&quot;ttest4.stan&quot;)
+bayes_ttest4 &lt;- sampling(model_ttest4, dataset.t)
+bayes_ttest4</code></pre>
+<pre><code>## Inference for Stan model: ttest4.
+## 4 chains, each with iter=2000; warmup=1000; thin=1; 
+## post-warmup draws per chain=1000, total post-warmup draws=4000.
+## 
+##            mean se_mean   sd     2.5%      25%      50%      75%    97.5%
+## mu        84.41    0.01 0.42    83.59    84.12    84.40    84.69    85.24
+## sig1       9.02    0.00 0.30     8.47     8.81     9.01     9.22     9.63
+## sig2       9.17    0.00 0.31     8.59     8.96     9.16     9.37     9.79
+## d         -1.05    0.01 0.59    -2.24    -1.45    -1.04    -0.65     0.11
+## pred1     84.43    0.14 8.93    66.99    78.46    84.43    90.36   101.80
+## pred2     83.47    0.15 9.06    66.05    77.29    83.41    89.50   101.04
+## cohenD    -0.12    0.00 0.06    -0.25    -0.16    -0.11    -0.07     0.01
+## lp__   -2484.94    0.03 1.42 -2488.59 -2485.59 -2484.60 -2483.91 -2483.22
+##        n_eff Rhat
+## mu      2569    1
+## sig1    3739    1
+## sig2    3949    1
+## d       2802    1
+## pred1   4000    1
+## pred2   3841    1
+## cohenD  2807    1
+## lp__    1783    1
+## 
+## Samples were drawn using NUTS(diag_e) at Mon Aug 27 17:34:40 2018.
+## For each parameter, n_eff is a crude measure of effective sample size,
+## and Rhat is the potential scale reduction factor on split chains (at 
+## convergence, Rhat=1).</code></pre>
+</div>
+<div id="1-2c" class="section level5">
+<h5>群1, 2の平均値の差が基準点cより大きい/小さい確率</h5>
+<pre class="r"><code>## 全データ数
+NROW(result.ttest2)</code></pre>
+<pre><code>## [1] 4000</code></pre>
+<pre class="r"><code>## 差が2.5cm以上生じる確率
+NROW(result.ttest2 %&gt;% filter(abs(.$d)&gt;2.5))/NROW(result.ttest2)</code></pre>
+<pre><code>## [1] 0.00875</code></pre>
+<p>この他，「効果量が基準点cより大きい確率」なども同様に検討することができます。</p>
+<p>事後予測分布を使って，今後のデータがどのようになるだろうか，という仮説を立てることも可能です。</p>
+<pre class="r"><code>## (今後の)セリーグの選手がパリーグの選手よりも体重が大きい確率
+sum(result.ttest2$pred1&gt;result.ttest2$pred2)/NROW(result.ttest2)</code></pre>
+<pre><code>## [1] 0.52475</code></pre>
+<pre class="r"><code>## (今後の)セリーグの選手がパリーグの選手よりも体重が5kg大きい確率
+sum(result.ttest2$pred1&gt;(result.ttest2$pred2+5))/NROW(result.ttest2)</code></pre>
+<pre><code>## [1] 0.36625</code></pre>
+<p>理解のポイントは次の三点です。</p>
+<ul>
+<li>パラメータについての仮説とデータについての予測の違いを理解し，いずれの値についての仮説を立てることも可能。</li>
+<li>事後分布・事後予測分布の具体的なサンプルの記述・変数の生成で議論でき，それ以外の統計的仮定を必要としていない</li>
+<li><code>generated quantities</code> ブロックで生成しても良いし，MCMCサンプルから変数を作っても良い</li>
+</ul>
+<p>事後分布の検証について，あくまでも同時確率空間の中での比較の集計(同じ行についておの比較の集計)であることに注意してください。</p>
+</div>
+</div>
+<div class="section level4">
+<h4>事後対数尤度</h4>
+<p>(対数)尤度はモデルとデータの当てはまりの程度です。事後対数尤度とは，パラメータの推定が終わった後(事後)，各サンプルから考えられる尤度の一覧であり，「当てはまりの程度」であることから，モデル適合度の検証に使える指標となります。</p>
+<p>例えば，t検定で分散が等質であるという仮定を置いた場合と，その仮定を置かない場合のモデル比較を考えます。</p>
+<p>生成量で事後対数尤度を算出します。</p>
+<pre class="r"><code># log_likを計算するコード
+modelA &lt;- stan_model(&quot;ttest5a.stan&quot;,model_name=&quot;var_equal&quot;)
+modelB &lt;- stan_model(&quot;ttest5b.stan&quot;,model_name=&quot;var_not_equal&quot;)
+# サンプル生成
+resultA &lt;- sampling(modelA, dataset.t)
+resultB &lt;- sampling(modelB, dataset.t)
+# 事後対数尤度の抽出
+resultA %&gt;% rstan::extract(pars=&quot;log_lik&quot;) -&gt; log_likA
+resultB %&gt;% rstan::extract(pars=&quot;log_lik&quot;) -&gt; log_likB
+# パッケージの読み込み
+library(loo)
+loo(log_likA$log_lik)</code></pre>
+<pre><code>## Warning: Relative effective sample sizes (&#39;r_eff&#39; argument) not specified.
+## For models fit with MCMC, the reported PSIS effective sample sizes and 
+## MCSE estimates will be over-optimistic.</code></pre>
+<pre><code>## Warning: Some Pareto k diagnostic values are too high. See help(&#39;pareto-k-diagnostic&#39;) for details.</code></pre>
+<pre><code>## 
+## Computed from 4000 by 918 log-likelihood matrix
+## 
+##            Estimate    SE
+## elpd_loo -1528919.8 217.4
+## p_loo         987.0   2.4
+## looic     3057839.6 434.9
+## ------
+## Monte Carlo SE of elpd_loo is NA.
+## 
+## Pareto k diagnostic values:
+##                          Count Pct.    Min. n_eff
+## (-Inf, 0.5]   (good)       0     0.0%  &lt;NA&gt;      
+##  (0.5, 0.7]   (ok)         0     0.0%  &lt;NA&gt;      
+##    (0.7, 1]   (bad)      918   100.0%  30        
+##    (1, Inf)   (very bad)   0     0.0%  &lt;NA&gt;      
+## See help(&#39;pareto-k-diagnostic&#39;) for details.</code></pre>
+<pre class="r"><code>loo(log_likB$log_lik)</code></pre>
+<pre><code>## Warning: Relative effective sample sizes (&#39;r_eff&#39; argument) not specified.
+## For models fit with MCMC, the reported PSIS effective sample sizes and 
+## MCSE estimates will be over-optimistic.
+
+## Warning: Some Pareto k diagnostic values are too high. See help(&#39;pareto-k-diagnostic&#39;) for details.</code></pre>
+<pre><code>## 
+## Computed from 4000 by 918 log-likelihood matrix
+## 
+##            Estimate    SE
+## elpd_loo -1529497.0 223.8
+## p_loo        1450.4   3.7
+## looic     3058994.1 447.6
+## ------
+## Monte Carlo SE of elpd_loo is NA.
+## 
+## Pareto k diagnostic values:
+##                          Count Pct.    Min. n_eff
+## (-Inf, 0.5]   (good)       0    0.0%   &lt;NA&gt;      
+##  (0.5, 0.7]   (ok)         0    0.0%   &lt;NA&gt;      
+##    (0.7, 1]   (bad)      458   49.9%   49        
+##    (1, Inf)   (very bad) 460   50.1%   16        
+## See help(&#39;pareto-k-diagnostic&#39;) for details.</code></pre>
+</div>
+<div id="t" class="section level4">
+<h4>対応のあるt検定</h4>
+<p>対応のあるt検定の場合は，二変数間の相関係数を考慮する必要があります。相関係数をモデル化するためには，多変量正規分布を考える必要があります。</p>
+<p>それを踏まえて，対応のある二群の関係をモデリングするには次のようにします。</p>
+<pre class="r"><code>P_ttest.model &lt;- stan_model(&quot;pairedT.stan&quot;)</code></pre>
+<pre><code>## data{
+##   int&lt;lower=0&gt; L; // data length
+##   vector[2] X[L]; // data vetor
+## }
+## 
+## parameters{
+##   vector[2] mu;      // mean vector
+##   real&lt;lower=0&gt; sd1;
+##   real&lt;lower=0&gt; sd2;
+##   real&lt;lower=-1,upper=1&gt; rho;
+## }
+## 
+## transformed parameters{
+##   cov_matrix[2] V;
+##   V[1,1] = sd1^2;
+##   V[2,2] = sd2^2;
+##   V[1,2] = sd1 * sd2 * rho;
+##   V[2,1] = sd1 * sd2 * rho;
+## }
+## 
+## model{
+##   //likelihood
+##   X ~ multi_normal(mu,V);
+##   // prior
+##   mu[1] ~ normal(0,100);
+##   mu[2] ~ normal(0,100);
+##   sd1 ~ cauchy(0,5);
+##   sd2 ~ cauchy(0,5);
+##   rho ~ uniform(-1,1);
+## }</code></pre>
+</div>
+<div class="section level4">
+<h4>相関係数の検定</h4>
+<p>対応のある二群の平均値を比較することもできますし，モデルが示すように相関係数も同時に推定できますので，ここでは相関係数に注目して推定値を確認したいと思います。</p>
+<p>野球選手の身長と体重の相関係数を推定します。</p>
+<pre class="r"><code># 身長・体重・リーグ情報だけ抜き出す
+df &lt;- bs %&gt;% select(&quot;weight&quot;,&quot;height&quot;,&quot;league&quot;) %&gt;% na.omit()
+# 描画
+df %&gt;% ggplot(aes(x = height, y = weight,color=league)) + geom_point()</code></pre>
+<p><img src="jssp03_files/figure-html/unnamed-chunk-17-1.png" width="672" /></p>
+<pre class="r"><code>cor(df[,1:2])</code></pre>
+<pre><code>##          weight   height
+## weight 1.000000 0.623402
+## height 0.623402 1.000000</code></pre>
+<pre class="r"><code>data.cor &lt;- list(L = NROW(df), X = df[,1:2])
+cor.fit &lt;- sampling(P_ttest.model,data.cor)</code></pre>
+<p>平均の差や無相関かどうかを検証するのは，これまで同様，事後分布の確信区間で検証できます。</p>
+</div>
+<div class="section level4">
+<h4>分散分析のモデリング</h4>
+<p>分散分析のことをベイジアン的にアプローチする場合，一要因の場合はこれまでの応用で，以下のように考えます。</p>
+<ul>
+<li>Between designは独立した分布から来ている群の平均値差を考えるので，群の数だけ正規分布を想定する。</li>
+<li>Within designは多次元正規分布から来ている群の平均値差を考えるので，水準の数だけ次元のある多次元正規分布空間を考える。</li>
+</ul>
+<p>例えば，水準数が増えた時の一般的なWithin designのコードは次のようになります。</p>
+<pre><code>## data {
+##   int L;  // data length
+##   int Nv; // number of variables
+##   vector[Nv] X[L];  // data vetor
+## }
+## 
+## parameters{
+##   vector[Nv]  mu;             // mean vector
+##   vector&lt;lower=0&gt;[Nv] sig;  //SD vector
+##   corr_matrix[Nv]   rho;    //相関行列
+## }
+## 
+## transformed parameters{
+##     cov_matrix[Nv] V;           //共分散行列
+##     V = quad_form_diag(rho,sig);//相関行列とSDを共分散行列にする関数
+## }
+## 
+## model{
+##     X ~ multi_normal(mu,V);
+##     //prior
+##     mu ~ normal(0,100);
+##     sig ~ cauchy(0,5);
+##     rho ~ lkj_corr(1);  //Stanのもつ相関行列用の事前分布
+## }</code></pre>
+<p>分散共分散行列の要素を推定しているので，<code>球面性の検定</code>など分布の仮定や<strong>補正に留意する必要はありません</strong>。</p>
+<p>また，二要因以上になる場合は交互作用項をデザインする必要がありますが，その際は分散分析におけるデータの組成をリバースエンジニアリングし，それをデータ生成モデルとしてStanで表現すれば良いでしょう。</p>
+<p>参考；<a href="https://www.slideshare.net/KojiKosugi/rmd-67205625">心理統計の課題をRmdで作る</a></p>
+</div>
+</div>
+<div class="section level3">
+<h3>補遺</h3>
+<p>JASPというソフトウェアを使うと，GUIで平均値差の検定を行うことができます。Bayesian ANOVAにも対応している大変優れたソフトです。</p>
+<p>参考；<a href="https://www.slideshare.net/daikihojo/jasp-89875504">心理学者のためのJASP入門(操作編)</a></p>
+</div>
+</div>
 
 
 

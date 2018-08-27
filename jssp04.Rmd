@@ -216,7 +216,7 @@ $$ \log(\lambda_i) \sim  Normal(\beta_0 + \beta_1 X_i,\sigma^2) $$
 これで個人変動$\sigma^2$を想定したモデルになります。
 
 ##### 実装
-```{r PoissonBayes}
+```{r PoissonBayes2}
 model.pois2 <- stan_model("poisson4.stan")
 fit.pois2 <- sampling(model.pois2,data.pois)
 # 係数の確認
@@ -331,7 +331,7 @@ paste(readLines("HLM.stan"), collapse = "\n") %>% cat()
 ```
 ```{r}
 fit.HLM <- sampling(model.HLM,dataset)
-print(fit18,pars=c("beta_0","mu_beta1","tau"))
+print(fit.HLM,pars=c("beta_0","mu_beta1","tau"))
 ```
 
 このようにすることで得られるメリットは三つあります。
