@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+
+<title>実践編；線形モデルの展開</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+<link rel="stylesheet" href="site_style.css" type="text/css" />
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+
+
+
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+  padding-left: 25px;
+  text-indent: 0;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">JSSP2018夏のチュートリアル</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">ホーム</a>
+</li>
+<li>
+  <a href="jssp01.html">Lesson1</a>
+</li>
+<li>
+  <a href="jssp02.html">Lesson2</a>
+</li>
+<li>
+  <a href="jssp03.html">Lesson3</a>
+</li>
+<li>
+  <a href="jssp04.html">Lesson4</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">実践編；線形モデルの展開</h1>
+
+</div>
+
+
+<div id="stan" class="section level2">
+<h2>Stanで回帰分析を実行する</h2>
+<div class="section level4">
+<h4>データを作って</h4>
+<pre class="r"><code># データの読み込み
+bs &lt;- read_csv(&quot;baseball.csv&quot;)</code></pre>
+<pre><code>## Parsed with column specification:
+## cols(
+##   .default = col_integer(),
+##   Name = col_character(),
+##   team = col_character(),
+##   salary = col_double(),
+##   position = col_character(),
+##   bloodType = col_character(),
+##   throw.by = col_character(),
+##   batting.by = col_character(),
+##   birth.place = col_character(),
+##   birth.day = col_date(format = &quot;&quot;),
+##   背番号 = col_character(),
+##   打率 = col_double(),
+##   出塁率 = col_double(),
+##   長打率 = col_double(),
+##   OPS = col_double(),
+##   RC27 = col_double(),
+##   XR27 = col_double(),
+##   防御率 = col_double(),
+##   勝率 = col_double(),
+##   投球回 = col_double(),
+##   WHIP = col_double()
+##   # ... with 2 more columns
+## )</code></pre>
+<pre><code>## See spec(...) for full column specifications.</code></pre>
+<pre class="r"><code># 身長と体重のデータだけ読み込む
+df &lt;- bs %&gt;% dplyr::select(&quot;weight&quot;, &quot;height&quot;) %&gt;% na.omit</code></pre>
+</div>
+<div class="section level4">
+<h4>いわゆる普通の回帰分析</h4>
+<pre class="r"><code># 最尤推定
+summary(lm(height ~ weight, data = df))</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = height ~ weight, data = df)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -13.9016  -2.8402  -0.0261   2.6653  16.4306 
+## 
+## Coefficients:
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) 148.57283    1.33809  111.03   &lt;2e-16 ***
+## weight        0.38267    0.01586   24.13   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 4.37 on 916 degrees of freedom
+## Multiple R-squared:  0.3886, Adjusted R-squared:  0.388 
+## F-statistic: 582.3 on 1 and 916 DF,  p-value: &lt; 2.2e-16</code></pre>
+</div>
+<div class="section level4">
+<h4>ベイジアン回帰分析</h4>
+<pre class="r"><code># データはリスト型で渡す
+dataset &lt;- list(L = NROW(df), X = df$weight, Y = df$height)</code></pre>
+<pre class="r"><code>model.reg &lt;- stan_model(&quot;regression.stan&quot;)</code></pre>
+<pre><code>## data{
+##   int&lt;lower=0&gt; L;
+##   real X[L];
+##   real Y[L];
+## }
+## 
+## parameters{
+##   real beta_0;
+##   real beta_1;
+##   real&lt;lower=0&gt; sigma;
+## }
+## 
+## model{
+##   for(l in 1:L){
+##     Y[l] ~ normal(beta_0 + beta_1 * X[l], sigma);
+##   }
+## }
+## 
+## generated quantities{
+##   real log_lik[L];
+##   real pred[L];
+##   for(l in 1:L){
+##     log_lik[l] = normal_lpdf(Y[l]|beta_0 + beta_1 * X[l], sigma);
+##     pred[l] = normal_rng(beta_0 + beta_1 * X[l], sigma);
+##   }
+## }</code></pre>
+<pre class="r"><code>fit.reg &lt;- sampling(model.reg, dataset)</code></pre>
+<pre class="r"><code># 係数の出力
+print(fit.reg, pars = c(&quot;beta_0&quot;, &quot;beta_1&quot;, &quot;sigma&quot;))</code></pre>
+<pre><code>## Inference for Stan model: regression.
+## 4 chains, each with iter=2000; warmup=1000; thin=1; 
+## post-warmup draws per chain=1000, total post-warmup draws=4000.
+## 
+##          mean se_mean   sd   2.5%    25%    50%    75%  97.5% n_eff Rhat
+## beta_0 148.50    0.04 1.29 145.88 147.65 148.50 149.35 151.02  1345    1
+## beta_1   0.38    0.00 0.02   0.35   0.37   0.38   0.39   0.41  1350    1
+## sigma    4.37    0.00 0.10   4.17   4.30   4.37   4.44   4.58  1507    1
+## 
+## Samples were drawn using NUTS(diag_e) at Mon Aug 27 21:08:51 2018.
+## For each parameter, n_eff is a crude measure of effective sample size,
+## and Rhat is the potential scale reduction factor on split chains (at 
+## convergence, Rhat=1).</code></pre>
+<pre class="r"><code># プロット
+plot(fit.reg,pars=c(&quot;sigma&quot;),show_density=T)</code></pre>
+<pre><code>## ci_level: 0.8 (80% intervals)</code></pre>
+<pre><code>## outer_level: 0.95 (95% intervals)</code></pre>
+<p><img src="jssp04_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<pre class="r"><code>bayesplot::mcmc_dens(as.array(fit.reg), pars = c(&quot;beta_0&quot;, &quot;beta_1&quot;, &quot;sigma&quot;))</code></pre>
+<p><img src="jssp04_files/figure-html/unnamed-chunk-7-2.png" width="672" /></p>
+</div>
+</div>
+<div class="section level2">
+<h2>事後予測分布</h2>
+<pre class="r"><code>g1 &lt;- rstan::extract(fit.reg, pars = &quot;pred&quot;) %&gt;% data.frame %&gt;% 
+  tidyr::gather(key,val) %&gt;% 
+  ggplot(aes(x=val))+geom_histogram(binwidth=1)+xlim(140,220)
+
+g2 &lt;- ggplot(df,aes(x=height))+geom_histogram(binwidth = 1)+xlim(140,220)
+# gridExtraパッケージは複数のggplotオブジェクトを並べて表示してくれます
+gridExtra::grid.arrange(g1, g2, ncol = 1)</code></pre>
+<p><img src="jssp04_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+</div>
+<div id="r2" class="section level2">
+<h2>R2や適合度も計算してみましょう</h2>
+<pre class="r"><code># 予測値を抜き出します
+rstan::extract(fit.reg, pars = &quot;pred&quot;) %&gt;% data.frame %&gt;% 
+  # データを縦長にし，変数ごとにグループ化
+  tidyr::gather(key,val,factor_key=TRUE) %&gt;% group_by(key) %&gt;% 
+  # 平均を推定値とします
+  summarize(EAP = mean(val)) -&gt; pred
+# 実測値と予測値の相関係数の二乗
+(cor(df$height, pred$EAP))^2</code></pre>
+<pre><code>## [1] 0.389353</code></pre>
+<pre class="r"><code># 事後対数尤度(これだけでは比較できませんが)
+rstan::extract(fit.reg, pars = &quot;log_lik&quot;)$log_lik %&gt;% loo()</code></pre>
+<pre><code>## Warning: Relative effective sample sizes (&#39;r_eff&#39; argument) not specified.
+## For models fit with MCMC, the reported PSIS effective sample sizes and 
+## MCSE estimates will be over-optimistic.</code></pre>
+<pre><code>## 
+## Computed from 4000 by 918 log-likelihood matrix
+## 
+##          Estimate   SE
+## elpd_loo  -2658.8 24.6
+## p_loo         3.6  0.4
+## looic      5317.5 49.1
+## ------
+## Monte Carlo SE of elpd_loo is 0.0.
+## 
+## All Pareto k estimates are good (k &lt; 0.5).
+## See help(&#39;pareto-k-diagnostic&#39;) for details.</code></pre>
+</div>
+<div class="section level2">
+<h2>ロジスティック回帰分析</h2>
+<p>セ・パ両リーグの違いをデータから予測してみます。従属変数が0/1のデータになるので，ロジスティック回帰分析を使います。</p>
+<pre class="r"><code># 投手ならば1,野手ならば0という変数を作成
+bs %&gt;% mutate(pos2 = ifelse(position==&quot;投手&quot;,1,0)) %&gt;% 
+  # 新変数と身長のデータだけ取り出す
+  dplyr::select(pos2,height) %&gt;% na.omit -&gt;df2
+# 身長とポジション(二値)の関係
+ggplot(df2,aes(x=height,y=pos2))+geom_point()</code></pre>
+<p><img src="jssp04_files/figure-html/ordinalLogistic-1.png" width="672" /></p>
+<pre class="r"><code># 最尤推定
+glm(pos2 ~ height, data=df2, family=binomial(link=&quot;logit&quot;)) %&gt;% summary</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = pos2 ~ height, family = binomial(link = &quot;logit&quot;), 
+##     data = df2)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -2.0454  -1.1364   0.6643   1.1006   1.7613  
+## 
+## Coefficients:
+##              Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept) -16.83525    2.39691  -7.024 2.16e-12 ***
+## height        0.09351    0.01327   7.045 1.86e-12 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 1272.0  on 917  degrees of freedom
+## Residual deviance: 1216.6  on 916  degrees of freedom
+## AIC: 1220.6
+## 
+## Number of Fisher Scoring iterations: 4</code></pre>
+<p>これをベイジアンモデリングで実行するには次のようにします。</p>
+<pre class="r"><code>model.logistic &lt;- stan_model(&quot;logistic.stan&quot;)</code></pre>
+<pre><code>## data{
+##   int&lt;lower=0&gt; N; // sample size
+##   real X[N];      // predictor
+##   int&lt;lower=0,upper=1&gt; Y[N];      // predicted value(should be 0,1)
+## }
+## 
+## parameters{
+##   real beta0;     // baseline
+##   real beta1;     // coefficient
+## }
+## 
+## model{
+##   real prob[N];  // transformed parameter
+##   //likelihood
+##   for(n in 1:N){
+##     prob[n] = inv_logit(beta0 + beta1 * X[n]);
+##     Y[n] ~ bernoulli(prob[n]);
+##   }
+##   //prior
+##   beta0 ~ normal(0,100);
+##   beta1 ~ normal(0,100);
+## }</code></pre>
+<p>実行します。</p>
+<pre class="r"><code># データはリスト型で渡す
+dataset &lt;- list(N = NROW(df2), X = df2$height, Y = df2$pos2)
+# MCMC!
+fit.logistic &lt;- sampling(model.logistic,dataset)
+# 結果の出力
+fit.logistic</code></pre>
+<pre><code>## Inference for Stan model: logistic.
+## 4 chains, each with iter=2000; warmup=1000; thin=1; 
+## post-warmup draws per chain=1000, total post-warmup draws=4000.
+## 
+##          mean se_mean   sd    2.5%     25%     50%     75%   97.5% n_eff
+## beta0  -16.89    0.11 2.32  -21.74  -18.37  -16.88  -15.31  -12.31   436
+## beta1    0.09    0.00 0.01    0.07    0.09    0.09    0.10    0.12   437
+## lp__  -609.25    0.04 0.95 -611.80 -609.63 -608.96 -608.57 -608.32   738
+##       Rhat
+## beta0 1.00
+## beta1 1.00
+## lp__  1.01
+## 
+## Samples were drawn using NUTS(diag_e) at Mon Aug 27 21:09:46 2018.
+## For each parameter, n_eff is a crude measure of effective sample size,
+## and Rhat is the potential scale reduction factor on split chains (at 
+## convergence, Rhat=1).</code></pre>
+<p>stanには専用の関数があって，これを利用した方が高速に結果を出すことができます。</p>
+<pre><code>## data{
+##   int&lt;lower=0&gt; N; // sample size
+##   real X[N];      // predictor
+##   int&lt;lower=0,upper=1&gt; Y[N];      // predicted value(should be 0,1)
+## }
+## 
+## parameters{
+##   real beta0;     // baseline
+##   real beta1;     // coefficient
+## }
+## 
+## model{
+##   //likelihood
+##   for(n in 1:N){
+##     Y[n] ~ bernoulli_logit(beta0 + beta1 * X[n]);
+##   }
+##   //prior
+##   beta0 ~ normal(0,100);
+##   beta1 ~ normal(0,100);
+## }</code></pre>
+</div>
+<div class="section level2">
+<h2>一般化線形モデル</h2>
+<div class="figure">
+<img src="glm.png" alt="GLMとLink関数" />
+<p class="caption">GLMとLink関数</p>
+</div>
+<div class="section level3">
+<h3>ポアソン回帰のコード</h3>
+<pre><code>## data{
+##   int&lt;lower=0&gt; L;   // sample size
+##   real X[L];       // predictor
+##   int&lt;lower=0&gt; Y[L];      // predicted
+## }
+## 
+## parameters{
+##   real beta0;
+##   real beta1;
+## }
+## 
+## transformed parameters{
+##   real&lt;lower=0&gt; theta[L];
+##   for(l in 1:L)
+##     theta[l] = exp(beta0 + beta1*X[l]);
+## }
+## 
+## model{
+##   for(l in 1:L)
+##     Y[l] ~ poisson(theta[l]);
+##     
+##   //prior
+##   beta0 ~ normal(0,100);
+##   beta1 ~ normal(0,100);
+## }</code></pre>
+<p>専用の関数バージョン</p>
+<pre><code>## data{
+##   int&lt;lower=0&gt; L;   // sample size
+##   real X[L];       // predictor
+##   int&lt;lower=0&gt; Y[L];      // predicted
+## }
+## 
+## parameters{
+##   real beta0;
+##   real beta1;
+## }
+## 
+## 
+## model{
+##   for(l in 1:L)
+##     Y[l] ~ poisson_log(beta0 + beta1*X[l]);
+##     
+##   //prior
+##   beta0 ~ normal(0,100);
+##   beta1 ~ normal(0,100);
+## }</code></pre>
+<div class="section level4">
+<h4>数値例</h4>
+<pre class="r"><code># 野球データから野手だけフィルター
+df3 &lt;- bs %&gt;% filter(position!=&quot;投手&quot;) %&gt;% 
+  # 変数を選択，欠損値の削除
+  dplyr::select(&quot;打席数&quot;,&quot;本塁打&quot;) %&gt;% na.omit %&gt;% 
+  # 日本語変数を英語名に
+  rename(AT.Bat=&quot;打席数&quot;,HR=&quot;本塁打&quot;) %&gt;% 
+  # 単位を整えておきます 
+  mutate(AT.Bat = AT.Bat/10)
+
+# ホームランのヒストグラム
+ggplot(df3,aes(x=HR))+geom_histogram(binwidth =3)</code></pre>
+<p><img src="jssp04_files/figure-html/poissonReg-1.png" width="672" /></p>
+<pre class="r"><code># ホームランと打席の散布図
+ggplot(df3,aes(x=AT.Bat,y=HR))+geom_point()</code></pre>
+<p><img src="jssp04_files/figure-html/poissonReg-2.png" width="672" /></p>
+<pre class="r"><code># 事後予測分布を作るモデルに書き換え
+model.pois &lt;- stan_model(&quot;poisson3.stan&quot;)
+# データ作成
+data.pois &lt;- list(L=NROW(df3),X=df3$AT.Bat,Y=df3$HR)
+# MCMC
+fit.pois &lt;- sampling(model.pois,data.pois)</code></pre>
+<pre><code>## Warning in .local(object, ...): some chains had errors; consider specifying
+## chains = 1 to debug</code></pre>
+<pre><code>## here are whatever error messages were returned</code></pre>
+<pre><code>## [[1]]
+## Stan model &#39;poisson3&#39; does not contain samples.</code></pre>
+<pre class="r"><code># 表示
+print(fit.pois,pars=c(&quot;beta0&quot;,&quot;beta1&quot;))</code></pre>
+<pre><code>## Inference for Stan model: poisson3.
+## 3 chains, each with iter=2000; warmup=1000; thin=1; 
+## post-warmup draws per chain=1000, total post-warmup draws=3000.
+## 
+##        mean se_mean   sd  2.5%   25%   50%   75% 97.5% n_eff Rhat
+## beta0 -0.22       0 0.07 -0.35 -0.26 -0.22 -0.17 -0.08   736    1
+## beta1  0.06       0 0.00  0.06  0.06  0.06  0.07  0.07   805    1
+## 
+## Samples were drawn using NUTS(diag_e) at Mon Aug 27 21:09:51 2018.
+## For each parameter, n_eff is a crude measure of effective sample size,
+## and Rhat is the potential scale reduction factor on split chains (at 
+## convergence, Rhat=1).</code></pre>
+</div>
+</div>
+</div>
+<div class="section level2">
+<h2>階層線形モデル</h2>
+<div class="section level4">
+<h4>過分散に対応する</h4>
+<p>先ほどの例，事後予測分布をつかって予測区間をみてみます。</p>
+<pre class="r"><code>rstan::extract(fit.pois, pars = &quot;pred&quot;) %&gt;% data.frame %&gt;% 
+  # 変数を縦長にし，ケースごとにグループ化
+  tidyr::gather(key,val,factor_key=T) %&gt;% group_by(key) %&gt;% print %&gt;% 
+  # 統計量の計算
+  summarise(EAP=mean(val),
+            U95=quantile(val,prob=0.975),
+            L95=quantile(val,prob=0.025)) %&gt;% ungroup %&gt;% 
+  # 元データの予測値と合わせる
+  mutate(AT=df3$AT.Bat,HR=df3$HR) %&gt;% print %&gt;% 
+  # key列を除外
+  dplyr::select(-key) %&gt;% 
+  # 作図用に改めて縦長に作り直し
+  tidyr::gather(type,val,-AT,-HR,factor_key=T) %&gt;% 
+  # 作図
+  ggplot(aes(x=AT,y=val,color=type)) + geom_point() +  
+  geom_point(aes(x=AT,y=HR),color=&quot;Black&quot;)</code></pre>
+<pre><code>## # A tibble: 906,000 x 2
+## # Groups:   key [302]
+##    key      val
+##    &lt;fct&gt;  &lt;dbl&gt;
+##  1 pred.1     1
+##  2 pred.1     0
+##  3 pred.1     0
+##  4 pred.1     0
+##  5 pred.1     2
+##  6 pred.1     0
+##  7 pred.1     1
+##  8 pred.1     0
+##  9 pred.1     0
+## 10 pred.1     2
+## # ... with 905,990 more rows
+## # A tibble: 302 x 6
+##    key        EAP   U95   L95    AT    HR
+##    &lt;fct&gt;    &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;int&gt;
+##  1 pred.1   0.871     3     0   1       0
+##  2 pred.2  25.0      35    16  52.9     9
+##  3 pred.3   0.826     3     0   0.4     0
+##  4 pred.4   3.33      7     0  21.8     4
+##  5 pred.5   1.13      4     0   5.1     0
+##  6 pred.6  11.6      19     5  41      29
+##  7 pred.7   0.859     3     0   0.8     0
+##  8 pred.8   1.52      4     0   9.7     3
+##  9 pred.9   5.02     10     1  28.3    12
+## 10 pred.10  1.44      4     0   8.7     1
+## # ... with 292 more rows</code></pre>
+<p><img src="jssp04_files/figure-html/pois_PPD-1.png" width="672" /></p>
+<p>結構外れている点がありますね。 これは同じ打席数であっても，HRバッターかどうかによって変わる個人差が大きいようです。 そこで，「基本的には打席数はホームラン数を予測する」けど「部分的には個人差が生じる」をモデル化して行きたいと思います。</p>
+<p>全体的には <span class="math display">\[ Y_i \sim Poisson(\lambda_i)\]</span> ただし <span class="math display">\[ \log(\lambda_i) = \beta_0 + \beta_1 X_i\]</span> あるいは <span class="math display">\[ \lambda_i = exp(\beta_0 + \beta_1 X_i) \]</span></p>
+<p>ですが，個人差<span class="math inline">\(\tau_i\)</span>を付け加えて <span class="math display">\[ \log(\lambda_i) =  \beta_0 + \beta_1 X_i + \tau_i\]</span> とします。ただしこの個人差は人によってプラスマイナスはありますが，平均はゼロの正規分布に従うとします。 <span class="math display">\[ \tau_i \sim Normal(0,\sigma^2) \]</span></p>
+<p>回帰分析のロジックと同じで，平均部分が0なのですから， <span class="math display">\[ \log(\lambda_i) \sim  Normal(\beta_0 + \beta_1 X_i,\sigma^2) \]</span></p>
+<p>これで個人変動<span class="math inline">\(\sigma^2\)</span>を想定したモデルになります。</p>
+<div class="section level5">
+<h5>実装</h5>
+<pre class="r"><code>model.pois2 &lt;- stan_model(&quot;poisson4.stan&quot;)
+fit.pois2 &lt;- sampling(model.pois2,data.pois)
+# 係数の確認
+print(fit.pois2,pars=c(&quot;beta0&quot;,&quot;beta1&quot;,&quot;sig&quot;))</code></pre>
+<pre><code>## Inference for Stan model: poisson4.
+## 4 chains, each with iter=2000; warmup=1000; thin=1; 
+## post-warmup draws per chain=1000, total post-warmup draws=4000.
+## 
+##        mean se_mean   sd  2.5%   25%   50%   75% 97.5% n_eff Rhat
+## beta0 -0.99       0 0.14 -1.28 -1.08 -0.99 -0.90 -0.73   853    1
+## beta1  0.08       0 0.00  0.07  0.08  0.08  0.08  0.09  1278    1
+## sig    0.87       0 0.07  0.75  0.82  0.87  0.92  1.02   823    1
+## 
+## Samples were drawn using NUTS(diag_e) at Mon Aug 27 21:10:09 2018.
+## For each parameter, n_eff is a crude measure of effective sample size,
+## and Rhat is the potential scale reduction factor on split chains (at 
+## convergence, Rhat=1).</code></pre>
+<pre class="r"><code>rstan::extract(fit.pois2, pars = &quot;pred&quot;) %&gt;% data.frame %&gt;% 
+  # 変数を縦長にし，ケースごとにグループ化
+  tidyr::gather(key,val,factor_key=T) %&gt;% group_by(key) %&gt;% print %&gt;% 
+  # 統計量の計算
+  summarise(EAP=mean(val),
+            U95=quantile(val,prob=0.975),
+            L95=quantile(val,prob=0.025)) %&gt;% ungroup %&gt;% 
+  # 元データの予測値と合わせる
+  mutate(AT=df3$AT.Bat,HR=df3$HR) %&gt;% print %&gt;% 
+  # key列を除外
+  dplyr::select(-key) %&gt;% 
+  # 作図用に改めて縦長に作り直し
+  tidyr::gather(type,val,-AT,-HR,factor_key=T) %&gt;% 
+  # 作図
+  ggplot(aes(x=AT,y=val,color=type)) + geom_point() +  
+  geom_point(aes(x=AT,y=HR),color=&quot;Black&quot;)</code></pre>
+<pre><code>## # A tibble: 1,208,000 x 2
+## # Groups:   key [302]
+##    key      val
+##    &lt;fct&gt;  &lt;dbl&gt;
+##  1 pred.1     1
+##  2 pred.1     0
+##  3 pred.1     1
+##  4 pred.1     0
+##  5 pred.1     0
+##  6 pred.1     0
+##  7 pred.1     0
+##  8 pred.1     0
+##  9 pred.1     0
+## 10 pred.1     0
+## # ... with 1,207,990 more rows
+## # A tibble: 302 x 6
+##    key        EAP   U95   L95    AT    HR
+##    &lt;fct&gt;    &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;int&gt;
+##  1 pred.1   0.401     2     0   1       0
+##  2 pred.2  10.4      20     3  52.9     9
+##  3 pred.3   0.385     2     0   0.4     0
+##  4 pred.4   3.6       9     0  21.8     4
+##  5 pred.5   0.503     3     0   5.1     0
+##  6 pred.6  27.7      43    15  41      29
+##  7 pred.7   0.395     2     0   0.8     0
+##  8 pred.8   2.02      6     0   9.7     3
+##  9 pred.9  10.7      21     3  28.3    12
+## 10 pred.10  0.944     4     0   8.7     1
+## # ... with 292 more rows</code></pre>
+<p><img src="jssp04_files/figure-html/PoissonBayes2-1.png" width="672" /></p>
+<p>今のはポアソン回帰のパラメータ<span class="math inline">\(\lambda\)</span>に事前分布ならぬ別の分布が入っている(確率分布の入れ子)ので，階層線形モデルと呼ばれるモデルになっています。</p>
+</div>
+</div>
+<div class="section level4">
+<h4>入れ子になったデータ構造</h4>
+<div class="section level5">
+<h5>個別の回帰分析</h5>
+<p>チームごとの階層性を考えてみましょう。次のグラフを見てください。</p>
+<pre class="r"><code># 野手のデータだけフィルタリング
+bs %&gt;% filter(position != &quot;投手&quot;) %&gt;% 
+  # 年俸と本塁打数，チーム情報変数をセレクト
+  select(&quot;salary&quot;, &quot;本塁打&quot;, &quot;team&quot;) %&gt;% 
+  # 欠損値を除外
+  na.omit() %&gt;% 
+  # 描画
+  ggplot(aes(x = 本塁打, y = salary, color = team)) + 
+  geom_point() + geom_smooth(method = &quot;lm&quot;, se = F)</code></pre>
+<p><img src="jssp04_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+<p>チームごとに傾きが異なりそうですので，チームごとの傾きが違うことをモデリングして行きたいと思います。</p>
+<pre class="r"><code># データセットの作成。まずは野手のみフィルタリング
+df &lt;- bs %&gt;% filter(position != &quot;投手&quot;) %&gt;%
+  # 変数を選んで欠損地を除外
+  select(&quot;salary&quot;,&quot;本塁打&quot;, &quot;team&quot;) %&gt;% na.omit() %&gt;%
+  # 縦軸の数字が桁違いに大きいので，桁を整えます
+  mutate(salary = salary/1000)</code></pre>
+<p>チームによって傾きは違う，というのを考慮するモデルを書きます。</p>
+<p>普通の回帰分析は <span class="math display">\[ Y_i = \beta_0 + \beta_1 X_i\]</span> ですが，チーム(添字j)をつけて <span class="math display">\[ Y_{ij} = \beta_0 + \beta_{1j} X_{ij} \]</span> とします。</p>
+<p>切片(<span class="math inline">\(\beta_0\)</span>)には<span class="math inline">\(j\)</span>がついていないので，各チーム共通です。</p>
+<pre class="r"><code># データはリスト型で渡す
+data.HLM &lt;- list(L=NROW(df),X=df$本塁打, Y=df$salary,
+                G=12, Idx=as.numeric(as.factor(df$team)))</code></pre>
+<pre class="r"><code>model.HLM.0 &lt;- stan_model(&#39;HLM0.stan&#39;)</code></pre>
+<pre><code>## data{
+##   int&lt;lower=0&gt; L; // data length
+##   int&lt;lower=0&gt; G; //number of maximim groups
+##   real X[L];
+##   real Y[L];
+##   int Idx[L]; // index of team
+## }
+## 
+## parameters{
+##   real beta_0;
+##   real beta_1[G];
+##   real&lt;lower=0&gt; sigma[G];
+## }
+## 
+## model{
+##   for(l in 1:L){
+##     Y[l] ~ normal(beta_0 + beta_1[Idx[l]] * X[l], sigma[Idx[l]]);
+##   }
+##   beta_0 ~ normal(0,100);
+##   beta_1 ~ normal(0,100);
+##   sigma ~ cauchy(0,5);
+## }
+## 
+## generated quantities{
+##   real pred[L];
+##   for(l in 1:L){
+##     pred[l] = normal_rng(beta_0 + beta_1[Idx[l]]* X[l], sigma[Idx[l]]);
+##   }
+## }</code></pre>
+<pre class="r"><code>fit.HLM.0 &lt;- sampling(model.HLM.0,data.HLM)
+print(fit.HLM.0,pars=c(&quot;beta_0&quot;,&quot;beta_1&quot;))</code></pre>
+<pre><code>## Inference for Stan model: HLM0.
+## 4 chains, each with iter=2000; warmup=1000; thin=1; 
+## post-warmup draws per chain=1000, total post-warmup draws=4000.
+## 
+##            mean se_mean   sd  2.5%  25%  50%  75% 97.5% n_eff Rhat
+## beta_0     2.47    0.01 0.37  1.74 2.22 2.47 2.72  3.17  4000    1
+## beta_1[1]  0.46    0.00 0.10  0.26 0.40 0.46 0.53  0.67  4000    1
+## beta_1[2]  0.63    0.00 0.11  0.41 0.56 0.63 0.71  0.86  4000    1
+## beta_1[3]  0.65    0.00 0.14  0.38 0.56 0.65 0.75  0.94  4000    1
+## beta_1[4]  0.63    0.00 0.16  0.30 0.52 0.63 0.73  0.94  4000    1
+## beta_1[5]  0.77    0.00 0.12  0.53 0.69 0.77 0.84  0.99  4000    1
+## beta_1[6]  1.13    0.00 0.26  0.64 0.95 1.12 1.30  1.64  4000    1
+## beta_1[7]  0.56    0.00 0.21  0.15 0.43 0.56 0.70  0.99  4000    1
+## beta_1[8]  0.22    0.00 0.15 -0.08 0.12 0.21 0.32  0.52  4000    1
+## beta_1[9]  0.71    0.00 0.25  0.23 0.55 0.71 0.87  1.21  4000    1
+## beta_1[10] 1.35    0.00 0.17  1.02 1.24 1.35 1.47  1.68  4000    1
+## beta_1[11] 0.96    0.00 0.13  0.69 0.88 0.96 1.05  1.22  4000    1
+## beta_1[12] 2.11    0.01 0.39  1.36 1.85 2.12 2.37  2.88  4000    1
+## 
+## Samples were drawn using NUTS(diag_e) at Mon Aug 27 21:10:20 2018.
+## For each parameter, n_eff is a crude measure of effective sample size,
+## and Rhat is the potential scale reduction factor on split chains (at 
+## convergence, Rhat=1).</code></pre>
+</div>
+<div class="section level5">
+<h5>可視化</h5>
+<pre class="r"><code># MCMCオブジェクトから予測値を取り出してデータフレームへ
+rstan::extract(fit.HLM.0,pars=&#39;pred&#39;) %&gt;% data.frame() %&gt;%
+  # データを縦型に
+  tidyr::gather(key,val,factor_key=T) %&gt;% 
+  # 変数ごとにグルーピング
+  group_by(key) %&gt;% 
+  # 平均値を推定値とします
+  summarize(EAP=mean(val)) %&gt;% ungroup %&gt;% 
+  # 元データの情報をくっつけて
+  mutate(salary=df$salary,team=df$team,HR=df$本塁打) %&gt;% 
+  # 必要な変数だけにして
+  select(&quot;EAP&quot;,&quot;HR&quot;,&quot;salary&quot;,&quot;team&quot;) %&gt;% 
+  # 描画
+  ggplot(aes(x=HR,y=EAP,color=team))+geom_point()+
+  geom_point(aes(x=HR,y=salary),color=&quot;Black&quot;)+
+  facet_wrap(~team)</code></pre>
+<p><img src="jssp04_files/figure-html/unnamed-chunk-21-1.png" width="672" /></p>
+</div>
+</div>
+<div class="section level3">
+<h3>階層化ー個別の推定を超えて</h3>
+<p>回帰係数が12もあるのでわかりにくいかもしれません。そこで，回帰係数<span class="math inline">\(\beta_{1j}\)</span>が分布することを考えます。すなわち， <span class="math display">\[\beta_{1j} \sim Normal(\beta_{1m},\tau^2)\]</span>$ のように，一箇所に情報を集約してやるのです。これもパラメータ<span class="math inline">\(\beta_{1j}\)</span>に更に上位階層のパラメータ(<span class="math inline">\(\beta_{1m},\tau\)</span>)がついた階層モデルになります。</p>
+<pre class="r"><code>model.HLM &lt;- stan_model(&#39;HLM.stan&#39;)</code></pre>
+<pre><code>## data{
+##   int&lt;lower=0&gt; L;
+##   int&lt;lower=0&gt; G; //グループ数
+##   real X[L];
+##   real Y[L];
+##   int Idx[L];
+## }
+## 
+## parameters{
+##   real beta_0;
+##   real beta_1[G];
+##   real mu_beta1;
+##   real&lt;lower=0&gt; sigma[G];
+##   real&lt;lower=0&gt; tau;
+## }
+## 
+## model{
+##   for(l in 1:L){
+##     Y[l] ~ normal(beta_0 + beta_1[Idx[l]] * X[l], sigma[Idx[l]]);
+##   }
+##   
+##   beta_1 ~ normal(mu_beta1,tau);
+##   beta_0 ~ normal(0,100);
+##   sigma ~ cauchy(0,5);  
+##   mu_beta1 ~ normal(0,100);
+##   tau ~ cauchy(0,5);
+## }
+## 
+## generated quantities{
+##   real pred[L];
+##   for(l in 1:L){
+##     pred[l] = normal_rng(beta_0 + beta_1[Idx[l]]* X[l], sigma[Idx[l]]);
+##   }
+## }</code></pre>
+<pre class="r"><code>fit.HLM &lt;- sampling(model.HLM,dataset)</code></pre>
+<pre><code>## Warning in FUN(X[[i]], ...): data with name L is not numeric and not used</code></pre>
+<pre><code>## Warning in FUN(X[[i]], ...): data with name G is not numeric and not used</code></pre>
+<pre><code>## Warning in FUN(X[[i]], ...): data with name Idx is not numeric and not used</code></pre>
+<pre><code>## failed to create the sampler; sampling not done</code></pre>
+<pre class="r"><code>print(fit.HLM,pars=c(&quot;beta_0&quot;,&quot;mu_beta1&quot;,&quot;tau&quot;))</code></pre>
+<pre><code>## Stan model &#39;HLM&#39; does not contain samples.</code></pre>
+<p>このようにすることで得られるメリットは三つあります。</p>
+<ul>
+<li>係数の情報の簡素化。これが100チームあったらその利便性は明らかでしょう。</li>
+<li>個々のケースについての過剰な適合(オーバーフィティング)からの脱却</li>
+<li>サンプルサイズが小さな群があっても適切な推定ができる</li>
+</ul>
+<p>一方留意すべき点として，次の二点があります。</p>
+<ul>
+<li>係数が同じ上位階層の分布から来ている＝似通っていることを前提にしており，極端な係数が出にくくなるような縛りをかけられているとも言える。係数が小さくなることを縮小shrinkageという。</li>
+</ul>
+<p>上位階層のパラメータであったとしても，ベイジアンモデリングの文脈では事後分布という同時確率空間の中にあることを思い出してください。</p>
+<ul>
+<li>予測に関する適合度に注意が必要である。すなわち，あるチームに新しい選手が入ることを考えるのか（下のレベルでの予測），次のチームができることを考えるのか（上位レベルでの予測）によって，予測の意味が変わってくる。</li>
+</ul>
+<p>二点めのことについては，<a href="http://watanabe-www.math.dis.titech.ac.jp/users/swatanab/waic2011.html">渡邊先生のサイト</a>に詳しいので，参照してください。</p>
+</div>
+<div id="irt" class="section level3">
+<h3>個人と刺激でネストされたデータ；IRTを例に</h3>
+<p>個人iが刺激(項目)jに反応したデータ<span class="math inline">\(Y_{ij}\)</span>は，正答を1,誤答を0としたダミーデータが入っているとします。この時，個人の正答率<span class="math inline">\(p_i\)</span>も検証したいですが，問題が難問なのか簡単だったのか，という難易度にも夜と思われます。そこで難易度を<span class="math inline">\(q_j\)</span>とし，</p>
+<p><span class="math display">\[ Y_{ij} \sim Bernoulli(\theta_{ij})\]</span> <span class="math display">\[ \theta_{ij} = p_i \times q_j \]</span> を考えたモデルを書くことができます。</p>
+<pre class="r"><code>model.irt0 &lt;- stan_model(&quot;IRT0.stan&quot;)</code></pre>
+<pre><code>## data{
+##   int&lt;lower=0&gt; N; //number of persons
+##   int&lt;lower=0&gt; M; //number of questions
+##   int K[N,M]; 
+## }
+## 
+## parameters{
+##   real&lt;lower=0,upper=1&gt; p[N];
+##   real&lt;lower=0,upper=1&gt; q[M];
+## }
+## 
+## transformed parameters{
+##   real&lt;lower=0,upper=1&gt; theta[N,M];
+##   for(n in 1:N){
+##     for(m in 1:M){
+##       theta[n,m] = p[n] * q[m];
+##     }
+##   }
+## }
+## 
+## model{
+##   for(n in 1:N){
+##     for(m in 1:M){
+##       K[n,m] ~ bernoulli(theta[n,m]);
+##     }
+##   }
+##   p ~ beta(1,1);
+##   q ~ beta(1,1);
+## }</code></pre>
+<p>このように，刺激の特性と個人の特性を区別して推定できるようになります。実験刺激の個々の特性から独立した個人の性質を測定したい場合などに応用できるでしょう。</p>
+<p>この考え方は項目反応理論(Item Response Theory)とよばれるテスト理論の一部を，ベイズモデルとして書いたものです(よく用いられるラッシュモデルは異なる定式化をしますが)。多段階の反応モデルも提案されており，リッカーと尺度の分析などにも応用できるでしょう。</p>
+<p>ベイズモデルを使うと，このように「個人でネストしている」「変数でネストしている」というような状況も表現できますし，それぞれの上位階層を想定することも可能です。まさに，ベイジアンモデリングの限界は研究者の想像力だけなのです。</p>
+</div>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
