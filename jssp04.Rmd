@@ -320,7 +320,7 @@ rstan::extract(fit.HLM.0,pars='pred') %>% data.frame() %>%
 ### 階層化ー個別の推定を超えて
 
 回帰係数が12もあるのでわかりにくいかもしれません。そこで，回帰係数$\beta_{1j}$が分布することを考えます。すなわち，
-$$\beta_{1j} \sim Normal(\beta_{1m},\tau^2)$$$
+$$\beta_{1j} \sim Normal(\beta_{1m},\tau^2)$$
 のように，一箇所に情報を集約してやるのです。これもパラメータ$\beta_{1j}$に更に上位階層のパラメータ($\beta_{1m},\tau$)がついた階層モデルになります。
 
 ```{r,results='hide'}
@@ -329,8 +329,9 @@ model.HLM <- stan_model('HLM.stan')
 ```{r, echo=FALSE, eval=TRUE}
 paste(readLines("HLM.stan"), collapse = "\n") %>% cat()
 ```
+
 ```{r}
-fit.HLM <- sampling(model.HLM,dataset)
+fit.HLM <- sampling(model.HLM,data.HLM)
 print(fit.HLM,pars=c("beta_0","mu_beta1","tau"))
 ```
 
