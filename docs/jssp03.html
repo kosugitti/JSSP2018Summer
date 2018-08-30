@@ -346,7 +346,7 @@ div.tocify {
 <pre><code>## See spec(...) for full column specifications.</code></pre>
 <pre class="r"><code>summarytools::dfSummary(bs) %&gt;% view</code></pre>
 <pre><code>## Method &#39;viewer&#39; only valid within RStudio. Switching method to &#39;browser&#39;.</code></pre>
-<pre><code>## Output file written: /var/folders/jr/fj1hq52s2_q59dk3tw7tzl3m0000gn/T//RtmpHJ4mhS/file2e6e30422094.html</code></pre>
+<pre><code>## Output file written: /var/folders/jr/fj1hq52s2_q59dk3tw7tzl3m0000gn/T//RtmpBcWC4C/file6be04c22d328.html</code></pre>
 <pre class="r"><code># 可視化
 bs %&gt;% filter(position != &quot;投手&quot;) %&gt;% 
   dplyr::select(salary,years, height, weight) %&gt;% ggpairs()</code></pre>
@@ -445,7 +445,7 @@ bayes_ttest</code></pre>
 ## sig   3974    1
 ## lp__  1933    1
 ## 
-## Samples were drawn using NUTS(diag_e) at Tue Aug 28 06:23:17 2018.
+## Samples were drawn using NUTS(diag_e) at Thu Aug 30 23:53:24 2018.
 ## For each parameter, n_eff is a crude measure of effective sample size,
 ## and Rhat is the potential scale reduction factor on split chains (at 
 ## convergence, Rhat=1).</code></pre>
@@ -496,24 +496,26 @@ rstan::extract(bayes_ttest, pars = c(&quot;mu1&quot;, &quot;mu2&quot;)) %&gt;%
 ##   sig1 ~ cauchy(0,5);
 ##   sig2 ~ cauchy(0,5);
 ## }</code></pre>
-<pre class="r"><code>bayes_ttest2 &lt;- sampling(model_ttest, dataset.t)
+<pre class="r"><code>bayes_ttest2 &lt;- sampling(model.ttest2, dataset.t)
 bayes_ttest2</code></pre>
-<pre><code>## Inference for Stan model: ttest_var_equal.
+<pre><code>## Inference for Stan model: ttest_var_different.
 ## 4 chains, each with iter=2000; warmup=1000; thin=1; 
 ## post-warmup draws per chain=1000, total post-warmup draws=4000.
 ## 
 ##          mean se_mean   sd     2.5%      25%      50%      75%    97.5%
-## mu1     84.40    0.01 0.42    83.58    84.11    84.40    84.69    85.21
-## mu2     83.35    0.01 0.43    82.53    83.07    83.35    83.65    84.18
-## sig      9.09    0.00 0.20     8.69     8.95     9.09     9.22     9.49
-## lp__ -2485.56    0.03 1.18 -2488.65 -2486.05 -2485.29 -2484.71 -2484.22
+## mu1     84.42    0.01 0.43    83.59    84.14    84.42    84.71    85.26
+## mu2     83.34    0.01 0.42    82.53    83.06    83.34    83.62    84.16
+## sig1     9.03    0.00 0.30     8.47     8.83     9.02     9.23     9.65
+## sig2     9.17    0.00 0.30     8.61     8.97     9.16     9.36     9.78
+## lp__ -2485.27    0.03 1.38 -2488.78 -2485.95 -2484.99 -2484.24 -2483.51
 ##      n_eff Rhat
 ## mu1   4000    1
 ## mu2   4000    1
-## sig   4000    1
-## lp__  1735    1
+## sig1  4000    1
+## sig2  4000    1
+## lp__  2210    1
 ## 
-## Samples were drawn using NUTS(diag_e) at Tue Aug 28 06:23:20 2018.
+## Samples were drawn using NUTS(diag_e) at Thu Aug 30 23:53:28 2018.
 ## For each parameter, n_eff is a crude measure of effective sample size,
 ## and Rhat is the potential scale reduction factor on split chains (at 
 ## convergence, Rhat=1).</code></pre>
@@ -564,7 +566,7 @@ result.ttest</code></pre>
 ## d     3048    1
 ## lp__  1741    1
 ## 
-## Samples were drawn using NUTS(diag_e) at Tue Aug 28 06:23:23 2018.
+## Samples were drawn using NUTS(diag_e) at Thu Aug 30 23:53:31 2018.
 ## For each parameter, n_eff is a crude measure of effective sample size,
 ## and Rhat is the potential scale reduction factor on split chains (at 
 ## convergence, Rhat=1).</code></pre>
@@ -587,8 +589,39 @@ NROW(df[df$d &gt; 0, ])/NROW(df)</code></pre>
 <p>ここでは生成量を使って様々な仮説を検証する方法について説明します。</p>
 <div class="section level5">
 <h5>効果量を求める</h5>
-<pre class="r"><code>model_ttest3 &lt;- stan_model(&quot;ttest3.stan&quot;)
-bayes_ttest3 &lt;- sampling(model_ttest3, dataset.t)</code></pre>
+<pre class="r"><code>model_ttest3 &lt;- stan_model(&quot;ttest3.stan&quot;)</code></pre>
+<pre><code>## data{
+##   int&lt;lower=0&gt; N1;
+##   int&lt;lower=1&gt; N2;
+##   real X1[N1];
+##   real X2[N2];
+## }
+## 
+## parameters{
+##   real mu;
+##   real&lt;lower=0&gt; sig1;
+##   real&lt;lower=0&gt; sig2;
+##   real d;
+## }
+## 
+## model{
+##   // likelihood
+##   X1 ~ normal(mu,sig1);
+##   X2 ~ normal(mu+d,sig2);
+##   // prior
+##   mu ~ normal(0,100);
+##   sig1 ~ cauchy(0,5);
+##   sig2 ~ cauchy(0,5);
+##   d ~ uniform(-50,50);
+## }
+## 
+## generated quantities{
+##   real pred1;
+##   real pred2;
+##   pred1 = normal_rng(mu,sig1);
+##   pred2 = normal_rng(mu+d,sig2);
+## }</code></pre>
+<pre class="r"><code>bayes_ttest3 &lt;- sampling(model_ttest3, dataset.t)</code></pre>
 </div>
 <div class="section level5">
 <h5>効果量</h5>
@@ -618,8 +651,41 @@ result.ttest2 %&gt;% select(&quot;d&quot;,&quot;sig1&quot;,&quot;sig2&quot;) %&g
 ##  3rd Qu.:-0.07265  
 ##  Max.   : 0.08071</code></pre>
 <p>同じことは生成量を使ってもできます。</p>
-<pre class="r"><code>model_ttest4 &lt;- stan_model(&quot;ttest4.stan&quot;)
-bayes_ttest4 &lt;- sampling(model_ttest4, dataset.t)
+<pre class="r"><code>model_ttest4 &lt;- stan_model(&quot;ttest4.stan&quot;)</code></pre>
+<pre><code>## data{
+##   int&lt;lower=0&gt; N1;
+##   int&lt;lower=1&gt; N2;
+##   real X1[N1];
+##   real X2[N2];
+## }
+## 
+## parameters{
+##   real mu;
+##   real&lt;lower=0&gt; sig1;
+##   real&lt;lower=0&gt; sig2;
+##   real d;
+## }
+## 
+## model{
+##   // likelihood
+##   X1 ~ normal(mu,sig1);
+##   X2 ~ normal(mu+d,sig2);
+##   // prior
+##   mu ~ normal(0,100);
+##   sig1 ~ cauchy(0,5);
+##   sig2 ~ cauchy(0,5);
+##   d ~ uniform(-50,50);
+## }
+## 
+## generated quantities{
+##   real pred1;
+##   real pred2;
+##   real cohenD;
+##   pred1 = normal_rng(mu,sig1);
+##   pred2 = normal_rng(mu+d,sig2);
+##   cohenD = d /(((sig1*N1)+(sig2*N2))/(N1+N2));
+## }</code></pre>
+<pre class="r"><code>bayes_ttest4 &lt;- sampling(model_ttest4, dataset.t)
 bayes_ttest4</code></pre>
 <pre><code>## Inference for Stan model: ttest4.
 ## 4 chains, each with iter=2000; warmup=1000; thin=1; 
@@ -644,7 +710,7 @@ bayes_ttest4</code></pre>
 ## cohenD  2807    1
 ## lp__    1783    1
 ## 
-## Samples were drawn using NUTS(diag_e) at Tue Aug 28 06:23:29 2018.
+## Samples were drawn using NUTS(diag_e) at Thu Aug 30 23:53:37 2018.
 ## For each parameter, n_eff is a crude measure of effective sample size,
 ## and Rhat is the potential scale reduction factor on split chains (at 
 ## convergence, Rhat=1).</code></pre>
@@ -780,7 +846,7 @@ loo(log_likA$log_lik)</code></pre>
 df &lt;- bs %&gt;% select(&quot;weight&quot;,&quot;height&quot;,&quot;league&quot;) %&gt;% na.omit()
 # 描画
 df %&gt;% ggplot(aes(x = height, y = weight,color=league)) + geom_point()</code></pre>
-<p><img src="jssp03_files/figure-html/unnamed-chunk-17-1.png" width="672" /></p>
+<p><img src="jssp03_files/figure-html/unnamed-chunk-21-1.png" width="672" /></p>
 <pre class="r"><code>cor(df[,1:2])</code></pre>
 <pre><code>##          weight   height
 ## weight 1.000000 0.623402

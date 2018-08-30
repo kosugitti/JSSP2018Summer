@@ -107,7 +107,7 @@ paste(readLines("ttest_var_different.stan"), collapse = "\n") %>% cat()
 ```
 
 ```{r var_diff}
-bayes_ttest2 <- sampling(model_ttest, dataset.t)
+bayes_ttest2 <- sampling(model.ttest2, dataset.t)
 bayes_ttest2
 ```
 
@@ -149,6 +149,14 @@ NROW(df[(df$d > -2) & (df$d < (-1)), ])/NROW(df)
 ##### 効果量を求める
 ```{r ttestコードを拡張}
 model_ttest3 <- stan_model("ttest3.stan")
+```
+
+```{r, echo=FALSE, eval=TRUE}
+paste(readLines("ttest3.stan"), collapse = "\n") %>% cat()
+```
+
+
+```{r}
 bayes_ttest3 <- sampling(model_ttest3, dataset.t)
 ```
 
@@ -173,6 +181,13 @@ result.ttest2 %>% select("d","sig1","sig2") %>%
 
 ```{r}
 model_ttest4 <- stan_model("ttest4.stan")
+```
+
+```{r, echo=FALSE, eval=TRUE}
+paste(readLines("ttest4.stan"), collapse = "\n") %>% cat()
+```
+
+```{r}
 bayes_ttest4 <- sampling(model_ttest4, dataset.t)
 bayes_ttest4
 ```
