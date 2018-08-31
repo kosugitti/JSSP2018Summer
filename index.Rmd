@@ -24,7 +24,6 @@ install.packages('plotly')
 レクチャーで使うサンプルデータは次の二つです。ダウンロードしてプロジェクトフォルダに保存して下さい。
 
  + [baseball.csv](baseball.csv)
- + [changepointdata.txt](changepointdata.txt)
 
 ## [乱数による分布の近似](jssp01.html)
 

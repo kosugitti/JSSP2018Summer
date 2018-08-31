@@ -415,7 +415,7 @@ print(fit.reg, pars = c(&quot;beta_0&quot;, &quot;beta_1&quot;, &quot;sigma&quot
 ## beta_1   0.38    0.00 0.02   0.35   0.37   0.38   0.39   0.41  1350    1
 ## sigma    4.37    0.00 0.10   4.17   4.30   4.37   4.44   4.58  1507    1
 ## 
-## Samples were drawn using NUTS(diag_e) at Fri Aug 31 12:10:21 2018.
+## Samples were drawn using NUTS(diag_e) at Fri Aug 31 22:43:29 2018.
 ## For each parameter, n_eff is a crude measure of effective sample size,
 ## and Rhat is the potential scale reduction factor on split chains (at 
 ## convergence, Rhat=1).</code></pre>
@@ -547,7 +547,7 @@ fit.logistic</code></pre>
 ## beta1 1.00
 ## lp__  1.01
 ## 
-## Samples were drawn using NUTS(diag_e) at Fri Aug 31 12:11:16 2018.
+## Samples were drawn using NUTS(diag_e) at Fri Aug 31 22:44:39 2018.
 ## For each parameter, n_eff is a crude measure of effective sample size,
 ## and Rhat is the potential scale reduction factor on split chains (at 
 ## convergence, Rhat=1).</code></pre>
@@ -665,7 +665,7 @@ print(fit.pois,pars=c(&quot;beta0&quot;,&quot;beta1&quot;))</code></pre>
 ## beta0 -0.22       0 0.07 -0.35 -0.26 -0.22 -0.17 -0.08   736    1
 ## beta1  0.06       0 0.00  0.06  0.06  0.06  0.07  0.07   805    1
 ## 
-## Samples were drawn using NUTS(diag_e) at Fri Aug 31 12:11:21 2018.
+## Samples were drawn using NUTS(diag_e) at Fri Aug 31 22:44:44 2018.
 ## For each parameter, n_eff is a crude measure of effective sample size,
 ## and Rhat is the potential scale reduction factor on split chains (at 
 ## convergence, Rhat=1).</code></pre>
@@ -697,16 +697,16 @@ print(fit.pois,pars=c(&quot;beta0&quot;,&quot;beta1&quot;))</code></pre>
 ## # Groups:   key [302]
 ##    key      val
 ##    &lt;fct&gt;  &lt;dbl&gt;
-##  1 pred.1     1
-##  2 pred.1     0
-##  3 pred.1     0
+##  1 pred.1     0
+##  2 pred.1     1
+##  3 pred.1     1
 ##  4 pred.1     0
-##  5 pred.1     1
-##  6 pred.1     0
+##  5 pred.1     0
+##  6 pred.1     1
 ##  7 pred.1     1
-##  8 pred.1     2
+##  8 pred.1     0
 ##  9 pred.1     1
-## 10 pred.1     1
+## 10 pred.1     2
 ## # ... with 905,990 more rows
 ## # A tibble: 302 x 6
 ##    key        EAP   U95   L95    AT    HR
@@ -730,8 +730,227 @@ print(fit.pois,pars=c(&quot;beta0&quot;,&quot;beta1&quot;))</code></pre>
 <p>これで個人変動<span class="math inline">\(\sigma^2\)</span>を想定したモデルになります。</p>
 <div class="section level5">
 <h5>実装</h5>
-<pre class="r"><code>model.pois2 &lt;- stan_model(&quot;poisson4.stan&quot;)
-fit.pois2 &lt;- sampling(model.pois2,data.pois)
+<pre class="r"><code>model.pois2 &lt;- stan_model(&quot;poisson4.stan&quot;)</code></pre>
+<pre><code>## hash mismatch so recompiling; make sure Stan code ends with a blank line</code></pre>
+<pre><code>## In file included from file984d55bbda25.cpp:8:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/src/stan/model/model_header.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/mat.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/core.hpp:12:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/core/gevv_vvv_vari.hpp:5:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/core/var.hpp:7:
+## In file included from /usr/local/lib/R/3.5/site-library/BH/include/boost/math/tools/config.hpp:13:
+## In file included from /usr/local/lib/R/3.5/site-library/BH/include/boost/config.hpp:39:
+## /usr/local/lib/R/3.5/site-library/BH/include/boost/config/compiler/clang.hpp:200:11: warning: &#39;BOOST_NO_CXX11_RVALUE_REFERENCES&#39; macro redefined [-Wmacro-redefined]
+## #  define BOOST_NO_CXX11_RVALUE_REFERENCES
+##           ^
+## &lt;command line&gt;:6:9: note: previous definition is here
+## #define BOOST_NO_CXX11_RVALUE_REFERENCES 1
+##         ^
+## In file included from file984d55bbda25.cpp:8:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/src/stan/model/model_header.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/mat.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/core.hpp:14:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/core/matrix_vari.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/mat/fun/Eigen_NumTraits.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/prim/mat/fun/Eigen.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/Dense:1:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/Core:531:
+## /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/src/Core/util/ReenableStupidWarnings.h:10:30: warning: pragma diagnostic pop could not pop, no matching push [-Wunknown-pragmas]
+##     #pragma clang diagnostic pop
+##                              ^
+## In file included from file984d55bbda25.cpp:8:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/src/stan/model/model_header.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/mat.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/core.hpp:14:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/core/matrix_vari.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/mat/fun/Eigen_NumTraits.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/prim/mat/fun/Eigen.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/Dense:2:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/LU:47:
+## /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/src/Core/util/ReenableStupidWarnings.h:10:30: warning: pragma diagnostic pop could not pop, no matching push [-Wunknown-pragmas]
+##     #pragma clang diagnostic pop
+##                              ^
+## In file included from file984d55bbda25.cpp:8:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/src/stan/model/model_header.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/mat.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/core.hpp:14:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/core/matrix_vari.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/mat/fun/Eigen_NumTraits.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/prim/mat/fun/Eigen.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/Dense:3:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/Cholesky:12:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/Jacobi:29:
+## /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/src/Core/util/ReenableStupidWarnings.h:10:30: warning: pragma diagnostic pop could not pop, no matching push [-Wunknown-pragmas]
+##     #pragma clang diagnostic pop
+##                              ^
+## In file included from file984d55bbda25.cpp:8:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/src/stan/model/model_header.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/mat.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/core.hpp:14:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/core/matrix_vari.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/mat/fun/Eigen_NumTraits.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/prim/mat/fun/Eigen.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/Dense:3:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/Cholesky:43:
+## /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/src/Core/util/ReenableStupidWarnings.h:10:30: warning: pragma diagnostic pop could not pop, no matching push [-Wunknown-pragmas]
+##     #pragma clang diagnostic pop
+##                              ^
+## In file included from file984d55bbda25.cpp:8:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/src/stan/model/model_header.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/mat.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/core.hpp:14:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/core/matrix_vari.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/mat/fun/Eigen_NumTraits.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/prim/mat/fun/Eigen.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/Dense:4:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/QR:17:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/Householder:27:
+## /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/src/Core/util/ReenableStupidWarnings.h:10:30: warning: pragma diagnostic pop could not pop, no matching push [-Wunknown-pragmas]
+##     #pragma clang diagnostic pop
+##                              ^
+## In file included from file984d55bbda25.cpp:8:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/src/stan/model/model_header.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/mat.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/core.hpp:14:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/core/matrix_vari.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/mat/fun/Eigen_NumTraits.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/prim/mat/fun/Eigen.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/Dense:5:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/SVD:48:
+## /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/src/Core/util/ReenableStupidWarnings.h:10:30: warning: pragma diagnostic pop could not pop, no matching push [-Wunknown-pragmas]
+##     #pragma clang diagnostic pop
+##                              ^
+## In file included from file984d55bbda25.cpp:8:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/src/stan/model/model_header.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/mat.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/core.hpp:14:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/core/matrix_vari.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/mat/fun/Eigen_NumTraits.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/prim/mat/fun/Eigen.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/Dense:6:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/Geometry:58:
+## /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/src/Core/util/ReenableStupidWarnings.h:10:30: warning: pragma diagnostic pop could not pop, no matching push [-Wunknown-pragmas]
+##     #pragma clang diagnostic pop
+##                              ^
+## In file included from file984d55bbda25.cpp:8:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/src/stan/model/model_header.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/mat.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/core.hpp:14:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/core/matrix_vari.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/mat/fun/Eigen_NumTraits.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/prim/mat/fun/Eigen.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/Dense:7:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/Eigenvalues:58:
+## /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/src/Core/util/ReenableStupidWarnings.h:10:30: warning: pragma diagnostic pop could not pop, no matching push [-Wunknown-pragmas]
+##     #pragma clang diagnostic pop
+##                              ^
+## In file included from file984d55bbda25.cpp:8:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/src/stan/model/model_header.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/mat.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/core.hpp:36:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/core/operator_unary_plus.hpp:7:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/prim/scal/fun/constants.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/BH/include/boost/math/constants/constants.hpp:13:
+## In file included from /usr/local/lib/R/3.5/site-library/BH/include/boost/math/tools/convert_from_string.hpp:15:
+## In file included from /usr/local/lib/R/3.5/site-library/BH/include/boost/lexical_cast.hpp:32:
+## In file included from /usr/local/lib/R/3.5/site-library/BH/include/boost/lexical_cast/try_lexical_convert.hpp:42:
+## In file included from /usr/local/lib/R/3.5/site-library/BH/include/boost/lexical_cast/detail/converter_lexical.hpp:52:
+## In file included from /usr/local/lib/R/3.5/site-library/BH/include/boost/container/container_fwd.hpp:61:
+## /usr/local/lib/R/3.5/site-library/BH/include/boost/container/detail/std_fwd.hpp:27:1: warning: inline namespaces are a C++11 feature [-Wc++11-inline-namespace]
+## BOOST_MOVE_STD_NS_BEG
+## ^
+## /usr/local/lib/R/3.5/site-library/BH/include/boost/move/detail/std_ns_begin.hpp:18:34: note: expanded from macro &#39;BOOST_MOVE_STD_NS_BEG&#39;
+##    #define BOOST_MOVE_STD_NS_BEG _LIBCPP_BEGIN_NAMESPACE_STD
+##                                  ^
+## /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1/__config:439:52: note: expanded from macro &#39;_LIBCPP_BEGIN_NAMESPACE_STD&#39;
+## #define _LIBCPP_BEGIN_NAMESPACE_STD namespace std {inline namespace _LIBCPP_NAMESPACE {
+##                                                    ^
+## In file included from file984d55bbda25.cpp:8:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/src/stan/model/model_header.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/mat.hpp:12:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/prim/mat.hpp:83:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/prim/mat/fun/csr_extract_u.hpp:6:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/Sparse:26:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/SparseCore:66:
+## /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/src/Core/util/ReenableStupidWarnings.h:10:30: warning: pragma diagnostic pop could not pop, no matching push [-Wunknown-pragmas]
+##     #pragma clang diagnostic pop
+##                              ^
+## In file included from file984d55bbda25.cpp:8:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/src/stan/model/model_header.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/mat.hpp:12:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/prim/mat.hpp:83:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/prim/mat/fun/csr_extract_u.hpp:6:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/Sparse:27:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/OrderingMethods:71:
+## /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/src/Core/util/ReenableStupidWarnings.h:10:30: warning: pragma diagnostic pop could not pop, no matching push [-Wunknown-pragmas]
+##     #pragma clang diagnostic pop
+##                              ^
+## In file included from file984d55bbda25.cpp:8:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/src/stan/model/model_header.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/mat.hpp:12:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/prim/mat.hpp:83:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/prim/mat/fun/csr_extract_u.hpp:6:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/Sparse:29:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/SparseCholesky:43:
+## /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/src/Core/util/ReenableStupidWarnings.h:10:30: warning: pragma diagnostic pop could not pop, no matching push [-Wunknown-pragmas]
+##     #pragma clang diagnostic pop
+##                              ^
+## In file included from file984d55bbda25.cpp:8:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/src/stan/model/model_header.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/mat.hpp:12:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/prim/mat.hpp:83:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/prim/mat/fun/csr_extract_u.hpp:6:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/Sparse:32:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/SparseQR:35:
+## /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/src/Core/util/ReenableStupidWarnings.h:10:30: warning: pragma diagnostic pop could not pop, no matching push [-Wunknown-pragmas]
+##     #pragma clang diagnostic pop
+##                              ^
+## In file included from file984d55bbda25.cpp:8:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/src/stan/model/model_header.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math.hpp:4:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/rev/mat.hpp:12:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/prim/mat.hpp:83:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/stan/math/prim/mat/fun/csr_extract_u.hpp:6:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/Sparse:33:
+## In file included from /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/IterativeLinearSolvers:46:
+## /usr/local/lib/R/3.5/site-library/RcppEigen/include/Eigen/src/Core/util/ReenableStupidWarnings.h:10:30: warning: pragma diagnostic pop could not pop, no matching push [-Wunknown-pragmas]
+##     #pragma clang diagnostic pop
+##                              ^
+## In file included from file984d55bbda25.cpp:503:
+## In file included from /usr/local/lib/R/3.5/site-library/rstan/include/rstan/rstaninc.hpp:3:
+## In file included from /usr/local/lib/R/3.5/site-library/rstan/include/rstan/stan_fit.hpp:36:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/src/stan/services/optimize/bfgs.hpp:11:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/src/stan/optimization/bfgs.hpp:9:
+## In file included from /usr/local/lib/R/3.5/site-library/StanHeaders/include/src/stan/optimization/lbfgs_update.hpp:6:
+## In file included from /usr/local/lib/R/3.5/site-library/BH/include/boost/circular_buffer.hpp:54:
+## In file included from /usr/local/lib/R/3.5/site-library/BH/include/boost/circular_buffer/details.hpp:20:
+## In file included from /usr/local/lib/R/3.5/site-library/BH/include/boost/move/move.hpp:30:
+## In file included from /usr/local/lib/R/3.5/site-library/BH/include/boost/move/iterator.hpp:27:
+## /usr/local/lib/R/3.5/site-library/BH/include/boost/move/detail/iterator_traits.hpp:29:1: warning: inline namespaces are a C++11 feature [-Wc++11-inline-namespace]
+## BOOST_MOVE_STD_NS_BEG
+## ^
+## /usr/local/lib/R/3.5/site-library/BH/include/boost/move/detail/std_ns_begin.hpp:18:34: note: expanded from macro &#39;BOOST_MOVE_STD_NS_BEG&#39;
+##    #define BOOST_MOVE_STD_NS_BEG _LIBCPP_BEGIN_NAMESPACE_STD
+##                                  ^
+## /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1/__config:439:52: note: expanded from macro &#39;_LIBCPP_BEGIN_NAMESPACE_STD&#39;
+## #define _LIBCPP_BEGIN_NAMESPACE_STD namespace std {inline namespace _LIBCPP_NAMESPACE {
+##                                                    ^
+## 16 warnings generated.</code></pre>
+<pre class="r"><code>fit.pois2 &lt;- sampling(model.pois2,data.pois)
 # 係数の確認
 print(fit.pois2,pars=c(&quot;beta0&quot;,&quot;beta1&quot;,&quot;sig&quot;))</code></pre>
 <pre><code>## Inference for Stan model: poisson4.
@@ -743,7 +962,7 @@ print(fit.pois2,pars=c(&quot;beta0&quot;,&quot;beta1&quot;,&quot;sig&quot;))</co
 ## beta1  0.08       0 0.00  0.07  0.08  0.08  0.08  0.09  1278    1
 ## sig    0.87       0 0.07  0.75  0.82  0.87  0.92  1.02   823    1
 ## 
-## Samples were drawn using NUTS(diag_e) at Fri Aug 31 12:11:38 2018.
+## Samples were drawn using NUTS(diag_e) at Fri Aug 31 22:45:41 2018.
 ## For each parameter, n_eff is a crude measure of effective sample size,
 ## and Rhat is the potential scale reduction factor on split chains (at 
 ## convergence, Rhat=1).</code></pre>
@@ -767,14 +986,14 @@ print(fit.pois2,pars=c(&quot;beta0&quot;,&quot;beta1&quot;,&quot;sig&quot;))</co
 ## # Groups:   key [302]
 ##    key      val
 ##    &lt;fct&gt;  &lt;dbl&gt;
-##  1 pred.1     0
-##  2 pred.1     1
+##  1 pred.1     1
+##  2 pred.1     0
 ##  3 pred.1     0
 ##  4 pred.1     0
 ##  5 pred.1     0
-##  6 pred.1     0
+##  6 pred.1     1
 ##  7 pred.1     0
-##  8 pred.1     0
+##  8 pred.1     1
 ##  9 pred.1     0
 ## 10 pred.1     0
 ## # ... with 1,207,990 more rows
@@ -875,7 +1094,7 @@ print(fit.HLM.0,pars=c(&quot;beta_0&quot;,&quot;beta_1&quot;))</code></pre>
 ## beta_1[11] 0.96    0.00 0.13  0.69 0.88 0.96 1.05  1.22  4000    1
 ## beta_1[12] 2.11    0.01 0.39  1.36 1.85 2.12 2.37  2.88  4000    1
 ## 
-## Samples were drawn using NUTS(diag_e) at Fri Aug 31 12:11:47 2018.
+## Samples were drawn using NUTS(diag_e) at Fri Aug 31 22:45:51 2018.
 ## For each parameter, n_eff is a crude measure of effective sample size,
 ## and Rhat is the potential scale reduction factor on split chains (at 
 ## convergence, Rhat=1).</code></pre>
@@ -950,7 +1169,7 @@ print(fit.HLM,pars=c(&quot;beta_0&quot;,&quot;mu_beta1&quot;,&quot;tau&quot;))</
 ## mu_beta1 0.79    0.00 0.14 0.54 0.70 0.78 0.87  1.09  2741    1
 ## tau      0.39    0.00 0.14 0.18 0.29 0.37 0.46  0.71  2251    1
 ## 
-## Samples were drawn using NUTS(diag_e) at Fri Aug 31 12:11:56 2018.
+## Samples were drawn using NUTS(diag_e) at Fri Aug 31 22:46:01 2018.
 ## For each parameter, n_eff is a crude measure of effective sample size,
 ## and Rhat is the potential scale reduction factor on split chains (at 
 ## convergence, Rhat=1).</code></pre>
