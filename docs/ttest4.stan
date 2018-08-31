@@ -29,5 +29,5 @@ generated quantities{
   real cohenD;
   pred1 = normal_rng(mu,sig1);
   pred2 = normal_rng(mu+d,sig2);
-  cohenD = d /(((sig1*N1)+(sig2*N2))/(N1+N2));
+  cohenD = d /sqrt((((sig1^2)*N1)+((sig2^2)*N2))/(N1+N2));
 }
