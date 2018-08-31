@@ -171,7 +171,7 @@ result.ttest2 <- rstan::extract(bayes_ttest3,pars=c("mu","d","sig1","sig2","pred
 # 差と標準偏差を抜き出す
 result.ttest2 %>% select("d","sig1","sig2") %>% 
   # プールされた標準偏差を計算
-  mutate(poolS = ((sig1*dataset.t$N1)+(sig2*dataset.t$N2))/
+  mutate(poolS = sqrt((sig1^2*dataset.t$N1)+(sig2^2*dataset.t$N2))/
                     (dataset.t$N1+dataset.t$N2)) %>%
   # 差を標準偏差で割ると効果量
   mutate(cohenD = d/poolS) %>% summary()
