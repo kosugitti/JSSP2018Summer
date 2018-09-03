@@ -35,7 +35,7 @@ plot(fit,pars=c("sig[1]","sig[2]","sig[3]","sig[4]",
 
 ```{r censored}
 ## データの準備
-nfails     <- 10   
+nfails     <- 949  
 n          <- 50    # Number of questions
 datasasoon <- list(nF=nfails,N=n) 
 ```
